@@ -4,22 +4,22 @@
   <style>
     body { font-family: Arial, Helvetica, sans-serif; color: #222; margin:0; padding:0 }
     .invoice { padding: 0 }
-    .header-banner { background:#b3e5fc; padding:20px; display:flex; justify-content:space-between; align-items:center; margin-bottom:20px }
-    .header-banner img { height:70px; margin-right:20px }
-    .header-title { flex:1 }
-    .header-title h1 { margin:0; font-size:24px; color:#333; font-weight:bold }
-    .header-title p { margin:4px 0; font-size:12px; color:#555 }
-    .header-title .url { font-size:11px; color:#0066cc }
-    .header-right { text-align:right }
-    .header-right h3 { margin:0; color:#0b74c9; font-size:18px }
+    .header-banner { background:#b3e5fc; padding:20px; display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px }
+    .header-banner img { height:100px; margin-right:20px }
+    .header-left { display:flex; align-items:center; flex:1 }
+    .header-right { text-align:right; flex:1 }
+    .header-right h1 { margin:0 0 8px 0; font-size:18px; color:#333; font-weight:bold; white-space:nowrap }
+    .header-right p { margin:4px 0; font-size:11px; color:#555 }
+    .header-right .tax-invoice { font-size:16px; color:#0b74c9; font-weight:bold; margin-top:8px }
+    .header-right .url { font-size:10px; color:#0066cc }
     .content { padding:20px }
     .section { margin-bottom:20px }
     .flex-row { display:flex; gap:30px; margin-bottom:20px }
     .flex-col { flex:1 }
-    .seller, .buyer { padding:10px; border:1px solid #e2e2e2; border-radius:4px }
+    .seller, .buyer { padding:10px; border:none; border-radius:0 }
     .seller h4, .buyer h4 { margin:0 0 8px 0; font-size:13px; font-weight:bold; color:#333 }
     .seller p, .buyer p { margin:4px 0; font-size:12px; line-height:1.4 }
-    .seller strong, .buyer strong { display:block; font-weight:bold; margin-bottom:4px }
+    .seller strong, .buyer strong {font-weight:bold; margin-bottom:4px }
     .invoice-meta { display:flex; gap:30px; margin-bottom:20px; font-size:12px }
     .invoice-meta-col { flex:1 }
     .invoice-meta-col strong { display:block; margin-bottom:4px }
@@ -36,7 +36,7 @@
     .totals-table .total-row { border-top:2px solid #333; font-weight:bold }
     .footer-section { display:flex; justify-content:space-between; margin-top:30px; font-size:12px }
     .footer-box { flex:1; text-align:center }
-    .signature-line { border-top:1px solid #333; margin-top:30px; padding-top:4px }
+    .signature-line { border-top:1px solid #333; padding-top:4px }
     .small { font-size:11px; color:#666 }
   </style>
 </head>
@@ -44,17 +44,15 @@
   <div class="invoice">
     <!-- Header Banner with Logo -->
     <div class="header-banner">
-      <div style="display:flex; align-items:center">
-        <img src="../public/images/Indo.png" alt="Logo">
-        <div class="header-title">
-          <h1>Indo Dictionary Networks Private Limited</h1>
-          <p>Unlocking the dictionary of networking excellence</p>
-          <p>CIN : U62013MP2025PTC076601 | GSTIN : 23AAICI1972L1ZC</p>
-          <p class="url">www.dictionarynetworks.in</p>
-        </div>
+      <div class="header-left">
+        <img src="<%= logoImage %>" alt="Logo">
       </div>
       <div class="header-right">
-        <h3>TAX INVOICE</h3>
+        <h1>Indo Dictionary Networks Private Limited</h1>
+        <p>Unlocking the dictionary of networking excellence</p>
+        <p>CIN : U62013MP2025PTC076601 | GSTIN : 23AAICI1972L1ZC</p>
+        <p class="url">www.dictionarynetworks.in</p>
+        <div class="tax-invoice">TAX INVOICE</div>
       </div>
     </div>
 
@@ -87,7 +85,7 @@
 
       <!-- Place of Supply -->
       <div class="place-supply">
-        <strong>Place of Supply :</strong> <%= data.placeOfSupply || 'Madhya Pradesh (23)' %>
+        <strong>Place of Supply :</strong> <%= data.placeOfSupply || '' %>
       </div>
 
       <!-- Invoice Details -->
@@ -101,10 +99,10 @@
           <%= data.invoiceDate || '' %>
         </div>
         <div class="invoice-meta-col">
-          <strong>Ref. PO Number</strong> - <%= data.refPo || '' %>
+          <strong>Ref. PO Number:</strong>  <%= data.refPo || '' %>
         </div>
         <div class="invoice-meta-col">
-          <strong>Ref. PI Number</strong> - <%= data.refPi || '' %>
+          <strong>Ref. PI Number:</strong>  <%= data.refPi || '' %>
         </div>
       </div>
 
@@ -164,10 +162,10 @@
       </div>
 
       <!-- Payment Information -->
-      <div class="section" style="margin-top:40px; background:#e3f2fd; padding:12px; border-radius:4px">
+      <div class="section" style="margin-top:20px; background:#e3f2fd; padding:12px; border-radius:4px">
         <h3 style="margin:0 0 12px 0; color:#0099ff">Payment Information</h3>
         <div style="font-size:12px">
-          <div><strong>Payment Method :</strong> <%= data.paymentMethod || 'Bank Transfer' %></div>
+          <div><strong>Payment Method :</strong>  <%= data.paymentMethod || '' %></div>
           <div><strong>Payment Date :</strong> <%= data.paymentDate || '' %></div>
         </div>
       </div>
@@ -177,6 +175,9 @@
         <div class="footer-box"></div>
         <div class="footer-box">
           <strong>For INDO DICTIONARY NETWORKS PRIVATE LIMITED</strong>
+          <div style="margin-top:16px">
+            <img src="<%= dirSignImage %>" alt="Director Signature">
+          </div>
           <div class="signature-line">
             <div style="margin-top:4px">DIRECTOR</div>
           </div>
