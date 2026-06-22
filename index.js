@@ -8,49 +8,51 @@ const app = express();
 app.use(express.json());
 const port = 4000;
 
-app.get('/', (req, res)=>{
-    res.json({message: "hello !"})
-});
-
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.set('view engine', ejs);
+app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'templates'))
 
-app.post('/genpdf',async(req, res)=>{
+// Serve a simple form at the root
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+// Expose generated PDFs for download
+app.use('/generatedPdf', express.static(path.join(__dirname, 'generatedPdf')));
+
+app.post('/genpdf', async (req, res) => {
     console.log('genpdf route hit');
     const data = req.body;
 
     try {
         const html = await ejs.renderFile(
             path.join(__dirname, 'templates', 'pdf-template.ejs'),
-            {data}
-        )
-        const browser = await puppeteer.launch({
-            headless:'new'
-        });
+            { data }
+        );
+
+        const browser = await puppeteer.launch({ headless: 'new' });
         const page = await browser.newPage();
-        await page.setContent(html, {waitUntil: 'networkidle0'});
+        await page.setContent(html, { waitUntil: 'networkidle0' });
 
         const pdfDir = path.join(__dirname, 'generatedPdf');
-        if(!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir);
+        if (!fs.existsSync(pdfDir)) fs.mkdirSync(pdfDir);
 
-        const pdfPath = path.join(pdfDir, `${Date.now()}_document.pdf`);
+        const filename = `${Date.now()}_document.pdf`;
+        const pdfPath = path.join(pdfDir, filename);
 
-        await page.pdf({
-            path: pdfPath,
-            format: 'A4',
-            printBackground: true
-        })
+        await page.pdf({ path: pdfPath, format: 'A4', printBackground: true });
 
         await browser.close();
-        res.status(200).json({message: 'PDF generated successfully', path: pdfPath})
+
+        // Return a URL the client can use to download the file
+        const url = `/generatedPdf/${filename}`;
+        res.status(200).json({ message: 'PDF generated successfully', url });
+    } catch (err) {
+        console.error('PDF generation Failed', err);
+        res.status(500).json({ error: 'Failed to generate' });
     }
-    catch(err){
-     console.err('PDF generation Failed',err);
-     res.status(500).json({error: 'Failed to generate'})
-    }
-})
+});
 
 app.listen(port, ()=>{
     console.log(`app is running at http://localhost:${port}`);
