@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Generate PDF</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+
+</head>
+
+<body>
+  <div class="container py-4">
+    <div class="card shadow-lg border-0">
+      <div class="card-header bg-primary text-white">
+        <h3 class="mb-0">Invoice Generator</h3>
+      </div>
+
+      <div class="card-body">
+        <form id="pdfForm">
+
+          <!-- Seller -->
+          <fieldset class="mb-4">
+            <legend>Seller Information</legend>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Company Name</label>
+                <input class="form-control" name="seller_name" value="INDO DICTIONARY NETWORKS PRIVATE LIMITED">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">GSTIN</label>
+                <input class="form-control" name="seller_gstin" value="23AAICI1972L1ZC">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Address Line 1</label>
+                <input class="form-control" name="seller_address1"
+                  value="12/1, Nandbagh Sector D, Army Head Quarter, Indore,">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Address Line 2</label>
+                <input class="form-control" name="seller_address2" value="Indore, Madhya Pradesh, India - 452006">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">City</label>
+                <input class="form-control" name="seller_city" value="Indore">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Contact</label>
+                <input class="form-control" name="seller_contact" value="info@dictionarynetworks.in, +91-96636 81258">
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Buyer -->
+          <fieldset class="mb-4">
+            <legend>Buyer Information</legend>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Buyer Name</label>
+                <input class="form-control" name="buyer_name">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">GSTIN</label>
+                <input class="form-control" name="buyer_gstin">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Address Line 1</label>
+                <input class="form-control" name="buyer_address1">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Address Line 2</label>
+                <input class="form-control" name="buyer_address2">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">City</label>
+                <input class="form-control" name="buyer_city">
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Invoice -->
+          <fieldset class="mb-4">
+            <legend>Invoice Details</legend>
+
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">Invoice Number</label>
+                <input class="form-control" name="invoice_number">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">Invoice Date</label>
+                <input class="form-control" type="date" name="invoice_date">
+              </div>
+
+              <div class="col-md-4">
+                <label class="form-label">GST Rate</label>
+                <input class="form-control" type="number" name="gst_rate" min="0">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Ref PO</label>
+                <input class="form-control" name="ref_po">
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Ref PI</label>
+                <input class="form-control" name="ref_pi">
+              </div>
+
+              <div class="col-md-12">
+                <label class="form-label">Place of Supply</label>
+                <input class="form-control" name="place_of_supply">
+              </div>
+            </div>
+          </fieldset>
+
+          <fieldset class="mb-4">
+            <legend>Items</legend>
+
+            <div class="table-responsive">
+              <table id="itemsTable" class="table table-bordered align-middle">
+                <thead class="table-light">
+                  <tr>
+                    <th>#</th>
+                    <th>Description</th>
+                    <th width="120">Qty</th>
+                    <th width="180">Unit Price</th>
+                    <th width="120">Action</th>
+                  </tr>
+                </thead>
+
+                <tbody>
+                  <tr>
+                    <td class="idx">1</td>
+
+                    <td>
+                      <input class="form-control desc" name="item_description">
+                    </td>
+
+                    <td>
+                      <input class="form-control qty" type="number" value="1">
+                    </td>
+
+                    <td>
+                      <input class="form-control price" type="number" step="0.01" value="0">
+                    </td>
+
+                    <td>
+                      <button type="button" class="btn btn-danger removeRow">
+                        Remove
+                      </button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <button type="button" id="addItem" class="btn btn-success">
+              Add Item
+            </button>
+          </fieldset>
+          <!-- Payment -->
+          <fieldset class="mb-4">
+            <legend>Payment</legend>
+
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Payment Method</label>
+                <select class="form-select" name="payment_method" required>
+                  <option value="">Select Payment Method</option>
+                  <option value="BankTransfer">Bank Transfer</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Cash">Cash</option>
+                </select>
+              </div>
+
+              <div class="col-md-6">
+                <label class="form-label">Payment Date</label>
+                <input class="form-control" type="date" name="payment_date" required>
+              </div>
+            </div>
+          </fieldset>
+
+          <button id="submitBtn" class="btn btn-primary btn-lg w-100" type="submit">
+            Generate PDF
+          </button>
+        </form>
+        <div id="warning" class="alert alert-danger mt-3 d-none"></div>
+
+        <div id="loader" class="text-center mt-3" style="display:none">
+          <div class="spinner-border text-primary"></div>
+          <p class="mt-2">Generating PDF...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="status"></div>
+
+  <!-- PDF Preview Modal -->
+  <div id="previewModal"
+    style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:999; padding:20px; box-sizing:border-box">
+    <div style="background:white; height:100%; display:flex; flex-direction:column; border-radius:8px">
+      <div
+        style="display:flex; justify-content:space-between; align-items:center; padding:12px; border-bottom:1px solid #ddd">
+        <h3 style="margin:0">PDF Preview</h3>
+        <button id="closeTopPreview" type="button" style="padding:8px 12px">Close</button>
+      </div>
+      <div style="flex:1; overflow:auto">
+        <iframe id="pdfPreview" style="width:100%; height:100%; border:none" src=""></iframe>
+      </div>
+      <div style="display:flex; gap:12px; padding:12px; border-top:1px solid #ddd">
+        <button id="downloadFromPreview" type="button"
+          style="padding:10px 16px; background:#28a745; color:white; border:none; border-radius:4px; cursor:pointer">Download
+          PDF</button>
+        <button id="closePreviewBtn" type="button"
+          style="padding:10px 16px; background:#6c757d; color:white; border:none; border-radius:4px; cursor:pointer">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('pdfForm');
+    const status = document.getElementById('status');
+    const warning = document.getElementById('warning');
+    const loader = document.getElementById('loader');
+    const submitBtn = document.getElementById('submitBtn');
+    const previewModal = document.getElementById('previewModal');
+    const pdfPreview = document.getElementById('pdfPreview');
+    let currentPdfUrl = '';
+
+    // Form validation
+    function validateForm() {
+      const requiredFields = [
+        { name: 'buyer_name', label: 'Buyer Name' },
+        { name: 'invoice_number', label: 'Invoice Number' },
+        { name: 'invoice_date', label: 'Invoice Date' },
+        { name: 'payment_date', label: 'Payment Date' },
+        { name: 'gst_rate', label: 'GST Rate' },
+        { name: 'payment_method', label: 'Payment Method' }
+      ];
+
+      const missingFields = [];
+      requiredFields.forEach(field => {
+        const input = form.querySelector(`[name="${field.name}"]`);
+        if (!input || !input.value.trim()) {
+          missingFields.push(field.label);
+        }
+      });
+
+      // Check if at least one item with description and price
+      const itemRows = Array.from(document.querySelectorAll('#itemsTable tbody tr'));
+      const hasValidItem = itemRows.some(row => {
+        const desc = row.querySelector('.desc').value.trim();
+        const price = Number(row.querySelector('.price').value);
+        return desc && price > 0;
+      });
+
+      if (!hasValidItem) {
+        missingFields.push('At least one item with description and unit price');
+      }
+
+      return missingFields;
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Validate form
+      const missingFields = validateForm();
+      if (missingFields.length > 0) {
+        warning.innerHTML = '<strong>⚠️ Please fill all required fields:</strong><br>' + missingFields.map(f => '• ' + f).join('<br>');
+        warning.classList.remove('d-none');
+        status.textContent = '';
+        return;
+      }
+
+      warning.classList.add('d-none');
+
+      const fd = new FormData(form);
+
+      // collect items
+      const rows = Array.from(document.querySelectorAll('#itemsTable tbody tr'));
+      const items = rows.map(r => ({
+        description: r.querySelector('.desc').value,
+        quantity: Number(r.querySelector('.qty').value) || 0,
+        unitPrice: Number(r.querySelector('.price').value) || 0
+      }));
+
+      const data = {
+        seller: {
+          name: fd.get('seller_name'),
+          addressLine1: fd.get('seller_address1'),
+          addressLine2: fd.get('seller_address2'),
+          city: fd.get('seller_city'),
+          gstin: fd.get('seller_gstin'),
+          contact: fd.get('seller_contact')
+        },
+        buyer: {
+          name: fd.get('buyer_name'),
+          addressLine1: fd.get('buyer_address1'),
+          addressLine2: fd.get('buyer_address2'),
+          city: fd.get('buyer_city'),
+          gstin: fd.get('buyer_gstin')
+        },
+        invoiceNumber: fd.get('invoice_number'),
+        invoiceDate: fd.get('invoice_date'),
+        refPo: fd.get('ref_po'),
+        refPi: fd.get('ref_pi'),
+        placeOfSupply: fd.get('place_of_supply'),
+        gstRate: Number(fd.get('gst_rate')) || 18,
+        items,
+        paymentMethod: fd.get('payment_method'),
+        paymentDate: fd.get('payment_date'),
+        timestamp: new Date().toLocaleString()
+      };
+
+      try {
+        // Show loader and disable button
+        loader.style.display = 'block';
+        submitBtn.disabled = true;
+        status.textContent = '';
+
+        const res = await fetch('/genpdf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+
+        const json = await res.json();
+        if (!res.ok) throw new Error(json.error || 'Generation failed');
+
+        // Hide loader
+        loader.style.display = 'none';
+        status.textContent = 'PDF ready — showing preview...';
+        currentPdfUrl = json.url;
+
+        // Open preview modal with the PDF
+        pdfPreview.src = currentPdfUrl;
+        previewModal.style.display = 'flex';
+
+        // Re-enable button after success
+        submitBtn.disabled = false;
+      } catch (err) {
+        console.error(err);
+        loader.style.display = 'none';
+        status.textContent = 'Error: ' + (err.message || err);
+        status.style.color = '#d32f2f';
+        // Re-enable button on error
+        submitBtn.disabled = false;
+      }
+    });
+
+    // Close preview modal
+    document.getElementById('closeTopPreview').addEventListener('click', () => {
+      previewModal.style.display = 'none';
+      pdfPreview.src = '';
+      submitBtn.disabled = false;
+    });
+
+    document.getElementById('closePreviewBtn').addEventListener('click', () => {
+      previewModal.style.display = 'none';
+      pdfPreview.src = '';
+      submitBtn.disabled = false;
+    });
+
+    // Download from preview
+    document.getElementById('downloadFromPreview').addEventListener('click', async () => {
+      if (!currentPdfUrl) return;
+      const r = await fetch(currentPdfUrl);
+      const blob = await r.blob();
+      const a = document.createElement('a');
+      const blobUrl = URL.createObjectURL(blob);
+      a.href = blobUrl;
+      a.download = currentPdfUrl.split('/').pop();
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+      status.textContent = 'Download started';
+    });
+
+    // dynamic items
+    document.getElementById('addItem').addEventListener('click', () => {
+      const tbody = document.querySelector('#itemsTable tbody');
+      const idx = tbody.querySelectorAll('tr').length + 1;
+
+      const tr = document.createElement('tr');
+
+      tr.innerHTML = `
+    <td class="idx">${idx}</td>
+
+    <td>
+      <input
+        class="form-control desc"
+        name="item_description">
+    </td>
+
+    <td>
+      <input
+        class="form-control qty"
+        type="number"
+        value="1">
+    </td>
+
+    <td>
+      <input
+        class="form-control price"
+        type="number"
+        step="0.01"
+        value="0">
+    </td>
+
+    <td>
+      <button
+        type="button"
+        class="btn btn-danger removeRow">
+        Remove
+      </button>
+    </td>
+  `;
+
+      tbody.appendChild(tr);
+    });
+    document.querySelector('#itemsTable').addEventListener('click', (e) => {
+      if (e.target.classList.contains('removeRow')) {
+        const tr = e.target.closest('tr');
+        tr.remove();
+        // reindex
+        Array.from(document.querySelectorAll('#itemsTable tbody tr')).forEach((r, i) => r.querySelector('.idx').textContent = i + 1);
+      }
+    });
+
+    document.querySelectorAll('input[type="date"]').forEach(input => {
+
+      input.addEventListener('click', () => {
+        if (typeof input.showPicker === 'function') {
+          input.showPicker();
+        }
+      });
+
+      input.addEventListener('focus', () => {
+        if (typeof input.showPicker === 'function') {
+          input.showPicker();
+        }
+      });
+
+    });
+  </script>
+</body>
+
+</html>
