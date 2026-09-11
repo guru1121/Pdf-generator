@@ -1,195 +1,592 @@
 <!DOCTYPE html>
+
 <html>
+
 <head>
+
   <style>
-    body { font-family: Arial, Helvetica, sans-serif; color: #222; margin:0; padding:0 }
-    .invoice { padding: 0 }
-    .header-banner { background:#b3e5fc; padding:20px; display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:20px }
-    .header-banner img { height:100px; margin-right:20px }
-    .header-left { display:flex; align-items:center; flex:1 }
-    .header-right { text-align:right; flex:1 }
-    .header-right h1 { margin:0 0 8px 0; font-size:18px; color:#333; font-weight:bold; white-space:nowrap }
-    .header-right p { margin:4px 0; font-size:11px; color:#555 }
-    .header-right .tax-invoice { font-size:16px; color:#0b74c9; font-weight:bold; margin-top:8px }
-    .header-right .url { font-size:10px; color:#0066cc }
-    .content { padding:20px }
-    .section { margin-bottom:20px }
-    .flex-row { display:flex; gap:30px; margin-bottom:20px }
-    .flex-col { flex:1 }
-    .seller, .buyer { padding:10px; border:none; border-radius:0 }
-    .seller h4, .buyer h4 { margin:0 0 8px 0; font-size:13px; font-weight:bold; color:#333 }
-    .seller p, .buyer p { margin:4px 0; font-size:12px; line-height:1.4 }
-    .seller strong, .buyer strong {font-weight:bold; margin-bottom:4px }
-    .invoice-meta { display:flex; gap:30px; margin-bottom:20px; font-size:12px }
-    .invoice-meta-col { flex:1 }
-    .invoice-meta-col strong { display:block; margin-bottom:4px }
-    .place-supply { background:#e3f2fd; padding:12px; border-left:4px solid #2196f3; margin-bottom:20px; font-size:12px }
-    .invoice-items { margin:20px 0 }
-    table { width:100%; border-collapse:collapse; margin:12px 0 }
-    th, td { padding:10px; border:1px solid #ddd; vertical-align:top; font-size:12px }
-    th { background:#e3f2fd; text-align:left; font-weight:bold; color:#0b74c9 }
-    .right { text-align:right }
-    .totals-section { margin-top:20px; display:flex; justify-content:flex-end }
-    .totals-table { width:300px }
-    .totals-table td { border:none; padding:6px 12px }
-    .totals-table .label { text-align:right; font-weight:normal }
-    .totals-table .total-row { border-top:2px solid #333; font-weight:bold }
-    .footer-section { display:flex; justify-content:space-between; margin-top:30px; font-size:12px }
-    .footer-box { flex:1; text-align:center }
-    .signature-line { border-top:1px solid #333; padding-top:4px }
-    .small { font-size:11px; color:#666 }
+
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      color: #222;
+      margin: 0;
+      padding: 0;
+      font-size: 12px;
+    }
+
+    .invoice { padding: 0; }
+
+    /* ── Header ── */
+    .header-banner {
+      background: #b3e5fc;
+      padding: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+    .header-banner img { height: 100px; margin-right: 20px; }
+    .header-left { display: flex; align-items: center; flex: 1; }
+    .header-right { text-align: right; flex: 1; }
+    .header-right h1 { margin: 0 0 8px 0; font-size: 18px; color: #333; font-weight: bold; white-space: nowrap; }
+    .header-right p  { margin: 4px 0; font-size: 11px; color: #555; }
+    .header-right .tax-invoice { font-size: 16px; color: #0b74c9; font-weight: bold; margin-top: 8px; }
+    .header-right .url { font-size: 10px; color: #0066cc; }
+
+    /* ── Layout helpers ── */
+    .content    { padding: 20px; }
+    .flex-row   { display: flex; gap: 30px; margin-bottom: 20px; }
+    .flex-col   { flex: 1; }
+
+    /* ── Seller / Buyer ── */
+    .seller, .buyer { padding: 10px; }
+    .seller h4, .buyer h4 { margin: 0 0 6px 0; font-size: 13px; font-weight: bold; color: #333; }
+    .seller p,  .buyer p  { margin: 3px 0; font-size: 12px; line-height: 1.4; }
+
+    /* ── Invoice meta ── */
+    .invoice-meta     { display: flex; gap: 30px; margin-bottom: 20px; font-size: 12px; }
+    .invoice-meta-col { flex: 1; }
+    .invoice-meta-col strong { display: block; margin-bottom: 4px; }
+
+    /* ── Place of supply ── */
+    .place-supply {
+      background: #e3f2fd;
+      padding: 12px;
+      border-left: 4px solid #2196f3;
+      margin-bottom: 20px;
+      font-size: 12px;
+    }
+
+    /* ── Section card heading ── */
+    .section-heading {
+      background: #f0f0f0;
+      padding: 10px 14px;
+      margin: 0 0 0 0;
+      font-size: 16px;
+      font-style: italic;
+      font-weight: bold;
+      color: #1a9edb;
+      border-radius: 4px 4px 0 0;
+    }
+
+    /* ── Items table ── */
+    .invoice-items { margin: 20px 0; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0;
+    }
+
+    th, td {
+      padding: 9px 11px;
+      border: 1px solid #d4d4d4;
+      vertical-align: top;
+      font-size: 12px;
+    }
+
+    th {
+      background: #f5f5f5;
+      font-weight: bold;
+      color: #1a9edb;
+      font-size: 12px;
+    }
+
+    td { color: #333; }
+
+    .right { text-align: right; }
+    .center { text-align: center; }
+
+    /* ── tfoot totals rows ── */
+    tfoot td {
+      background: #fafafa;
+      border-top: 1px solid #d4d4d4;
+      font-size: 12px;
+    }
+
+    .tfoot-label {
+      color: #2aa87a;
+      font-weight: bold;
+      text-align: right;
+    }
+
+    .tfoot-total {
+      font-weight: bold;
+      color: #333;
+    }
+
+    .tfoot-separator td {
+      border-top: 2px solid #b0b0b0;
+    }
+
+    /* ── Payment info card ── */
+    .payment-info {
+      margin-top: 24px;
+    }
+
+    .payment-info-body {
+      padding: 14px 16px;
+      font-size: 12px;
+      line-height: 1.9;
+      border: 1px solid #d4d4d4;
+      border-top: none;
+      border-radius: 0 0 4px 4px;
+    }
+
+    .payment-info-body strong {
+      font-weight: bold;
+      color: #222;
+    }
+
+    /* ── Footer / signature ── */
+    .footer-section {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      font-size: 12px;
+    }
+    .footer-box { flex: 1; text-align: center; }
+    .signature-line { border-top: 1px solid #333; padding-top: 4px; }
+
+    /* ── Thank you note ── */
+    .thank-you {
+      margin-top: 24px;
+      font-size: 11px;
+      color: #555;
+      line-height: 1.6;
+    }
+    .proforma-note { margin-top: 6px; font-weight: bold; color: #444; }
+
+    .small { font-size: 11px; color: #666; }
+
   </style>
+
 </head>
+
+
 <body>
+
   <div class="invoice">
-    <!-- Header Banner with Logo -->
+
+    <!-- Header -->
+
     <div class="header-banner">
+
       <div class="header-left">
-        <img src="<%= logoImage %>" alt="Logo">
+
+        <img
+          src="<%= logoImage %>"
+          alt="Logo"
+        >
+
       </div>
+
+
       <div class="header-right">
-        <h1>Indo Dictionary Networks Private Limited</h1>
-        <p>Unlocking the dictionary of networking excellence</p>
-        <p>CIN : U62013MP2025PTC076601 | GSTIN : 23AAICI1972L1ZC</p>
-        <p class="url">www.dictionarynetworks.in</p>
-        <div class="tax-invoice">TAX INVOICE</div>
+
+        <h1>
+          Indo Dictionary Networks Private Limited
+        </h1>
+
+        <p>
+          Unlocking the dictionary of networking excellence
+        </p>
+
+        <p>
+          CIN : U62013MP2025PTC076601 |
+          GSTIN : 23AAICI1972L1ZC
+        </p>
+
+        <p class="url">
+          www.dictionarynetworks.in
+        </p>
+
+
+        <!-- Document Heading -->
+
+        <% if (data.documentType === 'proforma') { %>
+
+          <div class="tax-invoice">
+            PROFORMA INVOICE
+          </div>
+
+        <% } else { %>
+
+          <div class="tax-invoice">
+            TAX INVOICE
+          </div>
+
+        <% } %>
+
       </div>
+
     </div>
 
+
     <div class="content">
-      <!-- Seller and Buyer Section -->
+
+      <%
+        function formatDate(dateStr) {
+          if (!dateStr) return '';
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return dateStr;
+          const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+          return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
+        }
+      %>
+
+      <!-- Seller and Buyer -->
+
       <div class="flex-row">
+
         <div class="flex-col">
+
           <div class="seller">
-            <h4>Seller:</h4>
-            <strong>INDO DICTIONARY NETWORKS PRIVATE LIMITED</strong>
-            <p>12/1, Nandbagh Sector D, Army Head Quarter, Indore,</p>
-            <p>Indore, Madhya Pradesh, India - 452006</p>
-            <p><strong>GSTIN :</strong> 23AAICI1972L1ZC</p>
-            <p><strong>Contact:</strong></p>
-            <p>info@dictionarynetworks.in</p>
-            <p>+91-96636 81258</p>
+
+            <h4>
+              Seller:
+            </h4>
+
+            <strong>
+              INDO DICTIONARY NETWORKS PRIVATE LIMITED
+            </strong>
+
+            <p>
+              12/1, Nandbagh Sector D, Army Head Quarter, Indore,
+            </p>
+
+            <p>
+              Indore, Madhya Pradesh, India - 452006
+            </p>
+
+            <p>
+              <strong>GSTIN :</strong>
+              23AAICI1972L1ZC
+            </p>
+
+            <p>
+              <strong>Contact:</strong>
+            </p>
+
+            <p>
+              info@dictionarynetworks.in
+            </p>
+
+            <p>
+              +91-96636 81258
+            </p>
+
           </div>
+
         </div>
+
+
         <div class="flex-col">
+
           <div class="buyer">
-            <h4>Buyer:</h4>
-            <strong><%= data.buyer && data.buyer.name ? data.buyer.name : 'Buyer Name' %></strong>
-            <p><%= data.buyer && data.buyer.addressLine1 ? data.buyer.addressLine1 : '' %></p>
-            <p><%= data.buyer && data.buyer.addressLine2 ? data.buyer.addressLine2 : '' %></p>
-            <p><%= data.buyer && data.buyer.city ? data.buyer.city : '' %></p>
-            <p><strong>GSTIN :</strong> <%= data.buyer && data.buyer.gstin ? data.buyer.gstin : '' %></p>
+
+            <h4>
+              Buyer:
+            </h4>
+
+            <strong>
+              <%= data.buyer && data.buyer.name
+                ? data.buyer.name
+                : 'Buyer Name'
+              %>
+            </strong>
+
+            <p>
+              <%= data.buyer && data.buyer.addressLine1
+                ? data.buyer.addressLine1
+                : ''
+              %>
+            </p>
+
+            <p>
+              <%= data.buyer && data.buyer.addressLine2
+                ? data.buyer.addressLine2
+                : ''
+              %>
+            </p>
+
+            <p>
+              <%= data.buyer && data.buyer.city
+                ? data.buyer.city
+                : ''
+              %>
+            </p>
+
+            <p>
+              <strong>GSTIN :</strong>
+              <%= data.buyer && data.buyer.gstin
+                ? data.buyer.gstin
+                : ''
+              %>
+            </p>
+
           </div>
+
         </div>
+
       </div>
+
 
       <!-- Place of Supply -->
+
       <div class="place-supply">
-        <strong>Place of Supply :</strong> <%= data.placeOfSupply || '' %>
+
+        <strong>
+          Place of Supply :
+        </strong>
+
+        <%= data.placeOfSupply || '' %>
+
       </div>
+
 
       <!-- Invoice Details -->
+
       <div class="invoice-meta">
+
         <div class="invoice-meta-col">
-          <strong>Invoice Number:</strong>
+
+          <strong>
+            <%= data.documentType === 'proforma'
+              ? 'PI Number:'
+              : 'Invoice Number:'
+            %>
+          </strong>
+
           <%= data.invoiceNumber || '' %>
+
         </div>
+
+
         <div class="invoice-meta-col">
-          <strong>Invoice Generated Date:</strong>
-          <%= data.invoiceDate || '' %>
+
+          <strong>
+            <%= data.documentType === 'proforma'
+              ? 'PI Generated Date:'
+              : 'Invoice Generated Date:'
+            %>
+          </strong>
+
+          <%= formatDate(data.invoiceDate) %>
+
         </div>
+
+
         <div class="invoice-meta-col">
-          <strong>Ref. PO Number:</strong>  <%= data.refPo || '' %>
+
+          <strong>
+            Ref. PO Number:
+          </strong>
+
+          <%= data.refPo || '' %>
+
         </div>
+
+
         <div class="invoice-meta-col">
-          <strong>Ref. PI Number:</strong>  <%= data.refPi || '' %>
+
+          <strong>
+            Ref. PI Number:
+          </strong>
+
+          <%= data.refPi || '' %>
+
         </div>
+
       </div>
 
-      <!-- Items Table -->
+
+      <!-- Items -->
+
       <div class="invoice-items">
-        <h3 style="color:#0099ff; background:#e3f2fd; padding:12px; margin:0 0 12px 0">Invoice Items</h3>
+
+        <div class="section-heading">
+          <%= data.documentType === 'proforma' ? 'Invoice Items' : 'Invoice Items' %>
+        </div>
+
+        <%
+          let subtotal = 0;
+          const gstRate = Number(data.gstRate) || 18;
+        %>
+
         <table>
+
           <thead>
             <tr>
               <th style="width:8%">Item #</th>
               <th>Description</th>
-              <th style="width:12%">Quantity</th>
-              <th style="width:14%">Unit Price</th>
-              <th style="width:14%">Total</th>
+              <th style="width:10%" class="center">Quantity</th>
+              <th style="width:16%" class="right">Unit Price</th>
+              <th style="width:16%" class="right">Total</th>
             </tr>
           </thead>
+
           <tbody>
-            <% let subtotal = 0; if (Array.isArray(data.items) && data.items.length) { %>
-              <% data.items.forEach(function(item, idx){
-                   const q = Number(item.quantity) || 0;
-                   const up = Number(item.unitPrice) || 0;
-                   const lineTotal = q * up;
-                   subtotal += lineTotal;
-              %>
-                <tr>
-                  <td class="right"><%= idx + 1 %></td>
-                  <td><%= item.description %></td>
-                  <td class="right"><%= q %></td>
-                  <td class="right">INR <%= up.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
-                  <td class="right">INR <%= lineTotal.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
-                </tr>
-              <% }); %>
-            <% } else { %>
-              <tr><td colspan="5">No items</td></tr>
+            <%
+              if (Array.isArray(data.items) && data.items.length) {
+                data.items.forEach(function(item, idx) {
+                  const q  = Number(item.quantity)  || 0;
+                  const up = Number(item.unitPrice) || 0;
+                  const lineTotal = q * up;
+                  subtotal += lineTotal;
+            %>
+            <tr>
+              <td class="center"><%= idx + 1 %></td>
+              <td><%= item.description %></td>
+              <td class="center"><%= q %></td>
+              <td class="right">INR <%= up.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
+              <td class="right">INR <%= lineTotal.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
+            </tr>
+            <% }); } else { %>
+            <tr><td colspan="5">No items</td></tr>
             <% } %>
           </tbody>
+
+          <%
+            const gstAmount = +(subtotal * gstRate / 100).toFixed(2);
+            const grandTotal = subtotal + gstAmount;
+          %>
+
+          <tfoot>
+            <!-- Subtotal row -->
+            <tr>
+              <td colspan="3" style="border:none"></td>
+              <td class="right" style="color:#555">Subtotal:</td>
+              <td class="right">INR <%= subtotal.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
+            </tr>
+            <!-- GST row -->
+            <tr>
+              <td colspan="3" style="border:none"></td>
+              <td class="right" style="color:#555">GST (<%= gstRate %>%):</td>
+              <td class="right">INR <%= gstAmount.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
+            </tr>
+            <!-- Total row -->
+            <tr class="tfoot-separator">
+              <td colspan="3" style="border:none"></td>
+              <td class="tfoot-label">Total:</td>
+              <td class="right tfoot-total">INR <%= grandTotal.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
+            </tr>
+          </tfoot>
+
         </table>
 
-        <!-- Totals -->
-        <div class="totals-section">
-          <table class="totals-table">
-            <tr>
-              <td class="label">Subtotal:</td>
-              <td class="right" style="font-weight:normal">INR <%= subtotal.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
-            </tr>
-            <% const gstRate = Number(data.gstRate) || 18; const gstAmount = +(subtotal * gstRate / 100).toFixed(2); %>
-            <tr>
-              <td class="label">GST (<%= gstRate %>%):</td>
-              <td class="right" style="font-weight:normal">INR <%= gstAmount.toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
-            </tr>
-            <tr class="total-row">
-              <td class="label">Total:</td>
-              <td class="right">INR <%= (subtotal + gstAmount).toLocaleString('en-IN', {maximumFractionDigits:2}) %></td>
-            </tr>
-          </table>
-        </div>
       </div>
 
-      <!-- Payment Information -->
-      <div class="section" style="margin-top:20px; background:#e3f2fd; padding:12px; border-radius:4px">
-        <h3 style="margin:0 0 12px 0; color:#0099ff">Payment Information</h3>
-        <div style="font-size:12px">
-          <div><strong>Payment Method :</strong>  <%= data.paymentMethod || '' %></div>
-          <div><strong>Payment Date :</strong> <%= data.paymentDate || '' %></div>
+
+      <!-- ================================================= -->
+      <!-- PAYMENT INFORMATION -->
+      <!-- ================================================= -->
+
+      <div class="payment-info">
+
+        <div class="section-heading">Payment Information</div>
+
+        <div class="payment-info-body">
+
+          <% if (data.documentType === 'proforma') { %>
+
+            <div><strong>Bank Name:</strong> AXIS BANK</div>
+            <div><strong>Account Name:</strong> Indo Dictionary Networks Private Limited</div>
+            <div><strong>Account Number:</strong> 925020025889006</div>
+            <div><strong>IFSC:</strong> UTIB0002820</div>
+
+          <% } else { %>
+
+            <div><strong>Payment Method:</strong> <%= data.paymentMethod || '' %></div>
+            <div><strong>Payment Date:</strong> <%= formatDate(data.paymentDate) %></div>
+
+          <% } %>
+
         </div>
+
       </div>
 
-      <!-- Footer -->
+
+      <!-- ================================================= -->
+      <!-- FOOTER -->
+      <!-- ================================================= -->
+
       <div class="footer-section">
-        <div class="footer-box"></div>
+
         <div class="footer-box">
-          <strong>For INDO DICTIONARY NETWORKS PRIVATE LIMITED</strong>
-          <div style="margin-top:16px">
-            <img src="<%= dirSignImage %>" alt="Director Signature">
-          </div>
-          <div class="signature-line">
-            <div style="margin-top:4px">DIRECTOR</div>
-          </div>
         </div>
+
+
+        <div class="footer-box">
+
+          <strong>
+            For INDO DICTIONARY NETWORKS PRIVATE LIMITED
+          </strong>
+
+
+          <div style="margin-top:16px">
+
+            <img
+              src="<%= dirSignImage %>"
+              alt="Director Signature"
+              style="width: 120px; height: auto;"
+            >
+
+          </div>
+
+
+          <div class="signature-line">
+
+            <div style="margin-top:4px">
+              DIRECTOR
+            </div>
+
+          </div>
+
+        </div>
+
       </div>
 
-      <!-- Thank you message -->
-      <div style="margin-top:30px; font-size:11px; color:#666; text-align:center">
-        Thank you for your business!<br>
-        If you have any questions regarding this invoice, please contact us at info@dictionarynetworks.in.
+
+      <!-- ================================================= -->
+      <!-- THANK YOU / PI NOTE -->
+      <!-- ================================================= -->
+
+      <div class="thank-you">
+
+        <% if (data.documentType === 'proforma') { %>
+
+          Thank you for your business!<br>
+
+          If you have any questions regarding this PI,
+          please contact us at
+          info@dictionarynetworks.in.
+
+          <div class="proforma-note">
+
+            Note: This is a proforma invoice
+            for informational purposes only.
+
+          </div>
+
+
+        <% } else { %>
+
+          Thank you for your business!<br>
+
+          If you have any questions regarding this invoice,
+          please contact us at
+          info@dictionarynetworks.in.
+
+        <% } %>
+
       </div>
+
+
     </div>
+
   </div>
+
 </body>
+
 </html>

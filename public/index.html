@@ -14,10 +14,25 @@
   <div class="container py-4">
     <div class="card shadow-lg border-0">
       <div class="card-header bg-primary text-white">
-        <h3 class="mb-0">Invoice Generator</h3>
+        <h3 class="mb-0" id="formHeading">Invoice Generator</h3>
       </div>
 
       <div class="card-body">
+        <!-- Document Type Selector -->
+        <div class="mb-4">
+          <label class="form-label fw-semibold d-block mb-2">Document Type</label>
+          <div class="btn-group w-100" role="group" aria-label="Document type">
+            <input type="radio" class="btn-check" name="docType" id="docTypeTax" value="tax" checked>
+            <label class="btn btn-outline-primary" for="docTypeTax">
+              🧾 Tax Invoice
+            </label>
+            <input type="radio" class="btn-check" name="docType" id="docTypeProforma" value="proforma">
+            <label class="btn btn-outline-secondary" for="docTypeProforma">
+              📄 Proforma Invoice
+            </label>
+          </div>
+        </div>
+
         <form id="pdfForm">
 
           <!-- Seller -->
@@ -27,12 +42,12 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Company Name</label>
-                <input class="form-control" name="seller_name" value="INDO DICTIONARY NETWORKS PRIVATE LIMITED">
+                <input class="form-control" name="seller_name" value="INDO DICTIONARY NETWORKS PRIVATE LIMITED" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
               </div>
 
               <div class="col-md-6">
                 <label class="form-label">GSTIN</label>
-                <input class="form-control" name="seller_gstin" value="23AAICI1972L1ZC">
+                <input class="form-control" name="seller_gstin" value="23AAICI1972L1ZC" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
               </div>
 
               <div class="col-md-6">
@@ -65,12 +80,12 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Buyer Name</label>
-                <input class="form-control" name="buyer_name">
+                <input class="form-control" name="buyer_name" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
               </div>
 
               <div class="col-md-6">
                 <label class="form-label">GSTIN</label>
-                <input class="form-control" name="buyer_gstin">
+                <input class="form-control" name="buyer_gstin" style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase()">
               </div>
 
               <div class="col-md-6">
@@ -105,7 +120,7 @@
                 <input class="form-control" type="date" name="invoice_date">
               </div>
 
-              <div class="col-md-4">
+              <div class="col-md-4" id="gstRateField">
                 <label class="form-label">GST Rate</label>
                 <input class="form-control" type="number" name="gst_rate" min="0">
               </div>
@@ -122,7 +137,7 @@
 
               <div class="col-md-12">
                 <label class="form-label">Place of Supply</label>
-                <input class="form-control" name="place_of_supply">
+                <input class="form-control" name="place_of_supply" value="Madhya Pradesh (23)">
               </div>
             </div>
           </fieldset>
@@ -172,14 +187,14 @@
               Add Item
             </button>
           </fieldset>
-          <!-- Payment -->
-          <fieldset class="mb-4">
+          <!-- Payment: Tax Invoice -->
+          <fieldset class="mb-4" id="taxPaymentSection">
             <legend>Payment</legend>
 
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Payment Method</label>
-                <select class="form-select" name="payment_method" required>
+                <select class="form-select" name="payment_method">
                   <option value="">Select Payment Method</option>
                   <option value="BankTransfer">Bank Transfer</option>
                   <option value="UPI">UPI</option>
@@ -189,13 +204,38 @@
 
               <div class="col-md-6">
                 <label class="form-label">Payment Date</label>
-                <input class="form-control" type="date" name="payment_date" required>
+                <input class="form-control" type="date" name="payment_date">
               </div>
             </div>
           </fieldset>
 
+          <!-- Payment: Proforma Invoice (static bank info) -->
+          <fieldset class="mb-4 d-none" id="proformaPaymentSection">
+            <legend>Payment Information</legend>
+
+            <div class="alert mb-0" style="background:#e3f2fd; border-left:4px solid #2196f3; border-radius:6px">
+              <div class="row g-2" style="font-size:0.95rem">
+                <div class="col-md-6">
+                  <span class="fw-semibold">Bank Name:</span> AXIS BANK
+                </div>
+                <div class="col-md-6">
+                  <span class="fw-semibold">Account Name:</span> Indo Dictionary Networks Private Limited
+                </div>
+                <div class="col-md-6">
+                  <span class="fw-semibold">Account Number:</span> 925020025889006
+                </div>
+                <div class="col-md-6">
+                  <span class="fw-semibold">IFSC:</span> UTIB0002820
+                </div>
+              </div>
+              <hr class="my-2">
+              <p class="mb-1 small text-muted">Thank you for your business! If you have any questions regarding this PI, please contact us at <a href="mailto:info@dictionarynetworks.in">info@dictionarynetworks.in</a>.</p>
+              <p class="mb-0 small fw-semibold text-secondary">Note: This is a proforma invoice for informational purposes only.</p>
+            </div>
+          </fieldset>
+
           <button id="submitBtn" class="btn btn-primary btn-lg w-100" type="submit">
-            Generate PDF
+            🧾 Generate Tax Invoice PDF
           </button>
         </form>
         <div id="warning" class="alert alert-danger mt-3 d-none"></div>
@@ -241,16 +281,24 @@
     const pdfPreview = document.getElementById('pdfPreview');
     let currentPdfUrl = '';
 
-    // Form validation
-    function validateForm() {
-      const requiredFields = [
-        { name: 'buyer_name', label: 'Buyer Name' },
-        { name: 'invoice_number', label: 'Invoice Number' },
-        { name: 'invoice_date', label: 'Invoice Date' },
-        { name: 'payment_date', label: 'Payment Date' },
-        { name: 'gst_rate', label: 'GST Rate' },
-        { name: 'payment_method', label: 'Payment Method' }
-      ];
+      const isProforma = () =>
+        document.querySelector('input[name="docType"]:checked').value === 'proforma';
+
+      // Form validation
+      function validateForm() {
+        const requiredFields = [
+          { name: 'buyer_name', label: 'Buyer Name' },
+          { name: 'invoice_number', label: 'Invoice Number' },
+          { name: 'invoice_date', label: 'Invoice Date' },
+        ];
+
+        if (!isProforma()) {
+          requiredFields.push(
+            { name: 'payment_date', label: 'Payment Date' },
+            { name: 'gst_rate', label: 'GST Rate' },
+            { name: 'payment_method', label: 'Payment Method' }
+          );
+        }
 
       const missingFields = [];
       requiredFields.forEach(field => {
@@ -333,7 +381,11 @@
         submitBtn.disabled = true;
         status.textContent = '';
 
-        const res = await fetch('/genpdf', {
+        // Determine endpoint based on selected document type
+        const selectedType = document.querySelector('input[name="docType"]:checked').value;
+        const endpoint = selectedType === 'proforma' ? '/genproformapdf' : '/genpdf';
+
+        const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -361,6 +413,23 @@
         // Re-enable button on error
         submitBtn.disabled = false;
       }
+    });
+
+    // Update UI when doc type changes
+    function applyDocType() {
+      const proforma = isProforma();
+      document.getElementById('formHeading').textContent =
+        proforma ? 'Proforma Invoice Generator' : 'Invoice Generator';
+      document.getElementById('taxPaymentSection').classList.toggle('d-none', proforma);
+      document.getElementById('proformaPaymentSection').classList.toggle('d-none', !proforma);
+      submitBtn.textContent = proforma
+        ? '📄 Generate Proforma Invoice PDF'
+        : '🧾 Generate Tax Invoice PDF';
+    }
+
+    // Update submit button label when doc type changes
+    document.querySelectorAll('input[name="docType"]').forEach(radio => {
+      radio.addEventListener('change', applyDocType);
     });
 
     // Close preview modal
