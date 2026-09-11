@@ -33,6 +33,12 @@
           </div>
         </div>
 
+        <!-- Auto-Generated Number Display -->
+        <div class="alert alert-info mb-4" id="autoNumberDisplay" style="display:none">
+          <strong>Auto-Generated Number:</strong>
+          <span id="autoNumberValue"></span>
+        </div>
+
         <form id="pdfForm">
 
           <!-- Seller -->
@@ -111,8 +117,8 @@
 
             <div class="row g-3">
               <div class="col-md-4">
-                <label class="form-label">Invoice Number</label>
-                <input class="form-control" name="invoice_number">
+                <label class="form-label">Invoice Number (Auto-Generated)</label>
+                <input class="form-control" name="invoice_number" disabled placeholder="Auto-generated on submit">
               </div>
 
               <div class="col-md-4">
@@ -127,12 +133,12 @@
 
               <div class="col-md-6">
                 <label class="form-label">Ref PO</label>
-                <input class="form-control" name="ref_po">
+                <input class="form-control" name="ref_po" id="refPoInput">
               </div>
 
               <div class="col-md-6">
                 <label class="form-label">Ref PI</label>
-                <input class="form-control" name="ref_pi">
+                <input class="form-control" name="ref_pi" id="refPiInput">
               </div>
 
               <div class="col-md-12">
@@ -279,16 +285,40 @@
     const submitBtn = document.getElementById('submitBtn');
     const previewModal = document.getElementById('previewModal');
     const pdfPreview = document.getElementById('pdfPreview');
+    const autoNumberDisplay = document.getElementById('autoNumberDisplay');
+    const autoNumberValue = document.getElementById('autoNumberValue');
     let currentPdfUrl = '';
 
       const isProforma = () =>
         document.querySelector('input[name="docType"]:checked').value === 'proforma';
 
+      // Load latest Ref PO / Ref PI numbers from database
+      async function loadLatestRefs() {
+        try {
+          const res = await fetch('/api/latest-refs');
+          if (!res.ok) return;
+
+          const { refPo, refPi } = await res.json();
+
+          if (refPo) {
+            document.getElementById('refPoInput').value = refPo;
+          }
+
+          if (refPi) {
+            document.getElementById('refPiInput').value = refPi;
+          }
+        } catch (err) {
+          console.error('Failed to load latest refs:', err);
+        }
+      }
+
+      // Load latest refs on page load
+      loadLatestRefs();
+
       // Form validation
       function validateForm() {
         const requiredFields = [
           { name: 'buyer_name', label: 'Buyer Name' },
-          { name: 'invoice_number', label: 'Invoice Number' },
           { name: 'invoice_date', label: 'Invoice Date' },
         ];
 
@@ -363,7 +393,6 @@
           city: fd.get('buyer_city'),
           gstin: fd.get('buyer_gstin')
         },
-        invoiceNumber: fd.get('invoice_number'),
         invoiceDate: fd.get('invoice_date'),
         refPo: fd.get('ref_po'),
         refPi: fd.get('ref_pi'),
@@ -399,6 +428,23 @@
         status.textContent = 'PDF ready — showing preview...';
         currentPdfUrl = json.url;
 
+        // Show the auto-generated document number
+        if (json.invoiceNumber) {
+          autoNumberValue.textContent = json.invoiceNumber;
+          autoNumberDisplay.style.display = 'block';
+        }
+
+        // Update Ref PI field with the auto-generated PI number
+        // (so it becomes the latest Ref PI for future tax invoices)
+        if (selectedType === 'proforma' && json.invoiceNumber) {
+          document.getElementById('refPiInput').value = json.invoiceNumber;
+        }
+
+        // Update Ref PO field with the current Ref PO value (saved)
+        if (data.refPo) {
+          document.getElementById('refPoInput').value = data.refPo;
+        }
+
         // Open preview modal with the PDF
         pdfPreview.src = currentPdfUrl;
         previewModal.style.display = 'flex';
@@ -425,6 +471,8 @@
       submitBtn.textContent = proforma
         ? '📄 Generate Proforma Invoice PDF'
         : '🧾 Generate Tax Invoice PDF';
+      // Hide auto number display when switching types
+      autoNumberDisplay.style.display = 'none';
     }
 
     // Update submit button label when doc type changes

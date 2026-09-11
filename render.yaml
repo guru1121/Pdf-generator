@@ -1,0 +1,19 @@
+# =====================================================
+# Render Blueprint Configuration
+# =====================================================
+
+services:
+  - type: web
+    name: invoice-generator
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false
+      - key: PORT
+        value: 10000

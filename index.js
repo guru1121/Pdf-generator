@@ -1,13 +1,21 @@
+// =====================================================
+// Invoice Generator - Main Application
+// =====================================================
+
+require('dotenv').config();
+
 const express = require('express');
 const puppeteer = require('puppeteer');
 const fs = require('fs');
 const ejs = require('ejs');
 const path = require('path');
 
+const db = require('./db');
+
 const app = express();
 app.use(express.json());
 
-const port = 4000;
+const port = process.env.PORT || 4000;
 
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -31,6 +39,47 @@ app.use(
     '/generatedPdf',
     express.static(path.join(__dirname, 'generatedPdf'))
 );
+
+
+// =====================================================
+// API: Get latest Ref PO and Ref PI numbers
+// =====================================================
+
+app.get('/api/latest-refs', async (req, res) => {
+    try {
+        const refs = await db.getLatestRefs();
+
+        res.status(200).json({
+            refPo: refs.latest_ref_po || '',
+            refPi: refs.latest_ref_pi || ''
+        });
+    } catch (err) {
+        console.error('Failed to fetch latest refs:', err);
+
+        res.status(500).json({
+            error: 'Failed to fetch latest refs'
+        });
+    }
+});
+
+
+// =====================================================
+// API: Get all documents (history)
+// =====================================================
+
+app.get('/api/documents', async (req, res) => {
+    try {
+        const documents = await db.getAllDocuments();
+
+        res.status(200).json(documents);
+    } catch (err) {
+        console.error('Failed to fetch documents:', err);
+
+        res.status(500).json({
+            error: 'Failed to fetch documents'
+        });
+    }
+});
 
 
 // =====================================================
@@ -66,6 +115,28 @@ function getImages() {
     return {
         logoImage,
         dirSignImage
+    };
+}
+
+
+// =====================================================
+// Helper: Calculate totals
+// =====================================================
+
+function calculateTotals(items, gstRate) {
+    const subtotal = items.reduce(
+        (sum, item) =>
+            sum + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0),
+        0
+    );
+
+    const gstAmount = +(subtotal * gstRate / 100).toFixed(2);
+    const grandTotal = subtotal + gstAmount;
+
+    return {
+        subtotal,
+        gstAmount,
+        grandTotal
     };
 }
 
@@ -162,10 +233,13 @@ app.post('/genpdf', async (req, res) => {
     console.log('Tax invoice generation started');
 
     try {
+        // Auto-generate the next invoice number
+        const invoiceNumber = await db.generateDocumentNumber('INVOICE');
 
         const data = {
             ...req.body,
-            documentType: 'invoice'
+            documentType: 'invoice',
+            invoiceNumber
         };
 
         const {
@@ -214,15 +288,48 @@ app.post('/genpdf', async (req, res) => {
         const url =
             `/generatedPdf/${filename}`;
 
+        // Calculate totals for database
+        const items = data.items || [];
+        const gstRate = Number(data.gstRate) || 18;
+        const totals = calculateTotals(items, gstRate);
+
+        // Save document to Supabase database
+        await db.saveDocument({
+            docType: 'INVOICE',
+            docNumber: invoiceNumber,
+            refPo: data.refPo,
+            refPi: data.refPi,
+            buyerName: data.buyer && data.buyer.name,
+            buyerGstin: data.buyer && data.buyer.gstin,
+            buyerAddress: [
+                data.buyer && data.buyer.addressLine1,
+                data.buyer && data.buyer.addressLine2,
+                data.buyer && data.buyer.city
+            ].filter(Boolean).join(', '),
+            invoiceDate: data.invoiceDate,
+            placeOfSupply: data.placeOfSupply,
+            gstRate,
+            items,
+            subtotal: totals.subtotal,
+            gstAmount: totals.gstAmount,
+            grandTotal: totals.grandTotal,
+            paymentMethod: data.paymentMethod,
+            paymentDate: data.paymentDate,
+            pdfUrl: url
+        });
+
         console.log(
             'Tax invoice generated:',
-            url
+            url,
+            '| Number:',
+            invoiceNumber
         );
 
         res.status(200).json({
             message:
                 'Tax invoice generated successfully',
             type: 'invoice',
+            invoiceNumber,
             url
         });
 
@@ -253,14 +360,13 @@ app.post('/genproformapdf', async (req, res) => {
     );
 
     try {
+        // Auto-generate the next PI number
+        const piNumber = await db.generateDocumentNumber('PI');
 
         const data = {
             ...req.body,
-
-            // Important:
-            // This tells the EJS template that
-            // this is a proforma invoice.
-            documentType: 'proforma'
+            documentType: 'proforma',
+            invoiceNumber: piNumber
         };
 
         const {
@@ -309,15 +415,48 @@ app.post('/genproformapdf', async (req, res) => {
         const url =
             `/generatedPdf/${filename}`;
 
+        // Calculate totals for database
+        const items = data.items || [];
+        const gstRate = Number(data.gstRate) || 18;
+        const totals = calculateTotals(items, gstRate);
+
+        // Save document to Supabase database
+        await db.saveDocument({
+            docType: 'PI',
+            docNumber: piNumber,
+            refPo: data.refPo,
+            refPi: data.refPi,
+            buyerName: data.buyer && data.buyer.name,
+            buyerGstin: data.buyer && data.buyer.gstin,
+            buyerAddress: [
+                data.buyer && data.buyer.addressLine1,
+                data.buyer && data.buyer.addressLine2,
+                data.buyer && data.buyer.city
+            ].filter(Boolean).join(', '),
+            invoiceDate: data.invoiceDate,
+            placeOfSupply: data.placeOfSupply,
+            gstRate,
+            items,
+            subtotal: totals.subtotal,
+            gstAmount: totals.gstAmount,
+            grandTotal: totals.grandTotal,
+            paymentMethod: data.paymentMethod,
+            paymentDate: data.paymentDate,
+            pdfUrl: url
+        });
+
         console.log(
             'Proforma invoice generated:',
-            url
+            url,
+            '| Number:',
+            piNumber
         );
 
         res.status(200).json({
             message:
                 'Proforma invoice generated successfully',
             type: 'proforma',
+            invoiceNumber: piNumber,
             url
         });
 
@@ -345,4 +484,3 @@ app.listen(port, () => {
         `App is running at http://localhost:${port}`
     );
 });
-
