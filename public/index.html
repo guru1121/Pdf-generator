@@ -116,9 +116,9 @@
             <legend>Invoice Details</legend>
 
             <div class="row g-3">
-              <div class="col-md-4">
+              <div class="col-md-4" id="invoiceNumberField" style="display:none">
                 <label class="form-label">Invoice Number (Auto-Generated)</label>
-                <input class="form-control" name="invoice_number" disabled placeholder="Auto-generated on submit">
+                <input class="form-control" name="invoice_number" id="invoiceNumberInput" disabled placeholder="Auto-generated on submit">
               </div>
 
               <div class="col-md-4">
@@ -133,12 +133,12 @@
 
               <div class="col-md-6">
                 <label class="form-label">Ref PO</label>
-                <input class="form-control" name="ref_po" id="refPoInput">
+                <input class="form-control" name="ref_po" id="refPoInput" value="0199">
               </div>
 
               <div class="col-md-6">
                 <label class="form-label">Ref PI</label>
-                <input class="form-control" name="ref_pi" id="refPiInput">
+                <input class="form-control" name="ref_pi" id="refPiInput" value="DNI-PI-2026-103">
               </div>
 
               <div class="col-md-12">
@@ -287,48 +287,78 @@
     const pdfPreview = document.getElementById('pdfPreview');
     const autoNumberDisplay = document.getElementById('autoNumberDisplay');
     const autoNumberValue = document.getElementById('autoNumberValue');
+    const invoiceNumberInput = document.getElementById('invoiceNumberInput');
+    const invoiceNumberField = document.getElementById('invoiceNumberField');
     let currentPdfUrl = '';
 
-      const isProforma = () =>
-        document.querySelector('input[name="docType"]:checked').value === 'proforma';
+    const isProforma = () =>
+      document.querySelector('input[name="docType"]:checked').value === 'proforma';
 
-      // Load latest Ref PO / Ref PI numbers from database
-      async function loadLatestRefs() {
-        try {
-          const res = await fetch('/api/latest-refs');
-          if (!res.ok) return;
+    // Load latest Ref PO / Ref PI numbers from database
+    async function loadLatestRefs() {
+      try {
+        const res = await fetch('/api/latest-refs');
+        if (!res.ok) return;
 
-          const { refPo, refPi } = await res.json();
+        const { refPo, refPi } = await res.json();
 
-          if (refPo) {
-            document.getElementById('refPoInput').value = refPo;
-          }
-
-          if (refPi) {
-            document.getElementById('refPiInput').value = refPi;
-          }
-        } catch (err) {
-          console.error('Failed to load latest refs:', err);
+        if (refPo) {
+          document.getElementById('refPoInput').value = refPo;
         }
+
+        if (refPi) {
+          document.getElementById('refPiInput').value = refPi;
+        }
+      } catch (err) {
+        console.error('Failed to load latest refs:', err);
       }
+    }
 
-      // Load latest refs on page load
-      loadLatestRefs();
+    // Load next document number from database for preview
+    async function loadNextNumber() {
+      try {
+        const docType = isProforma() ? 'PI' : 'INVOICE';
+        const res = await fetch(`/api/next-number/${docType}`);
+        if (!res.ok) return;
 
-      // Form validation
-      function validateForm() {
-        const requiredFields = [
-          { name: 'buyer_name', label: 'Buyer Name' },
-          { name: 'invoice_date', label: 'Invoice Date' },
-        ];
-
-        if (!isProforma()) {
-          requiredFields.push(
-            { name: 'payment_date', label: 'Payment Date' },
-            { name: 'gst_rate', label: 'GST Rate' },
-            { name: 'payment_method', label: 'Payment Method' }
-          );
+        const data = await res.json();
+        if (data.nextNumber) {
+          // Show next number in the alert display area
+          autoNumberValue.textContent = data.nextNumber;
+          autoNumberDisplay.style.display = 'block';
+          // Also set the disabled invoice number input field if visible
+          if (invoiceNumberInput) {
+            invoiceNumberInput.value = data.nextNumber;
+          }
         }
+      } catch (err) {
+        console.error('Failed to load next number:', err);
+      }
+    }
+
+    // Combine loading refs and next number
+    async function loadInitialData() {
+      await loadLatestRefs();
+      await loadNextNumber();
+    }
+
+    // Load initial data on page load
+    loadInitialData();
+
+    // Form validation
+    function validateForm() {
+      const requiredFields = [
+        { name: 'buyer_name', label: 'Buyer Name' },
+        { name: 'invoice_date', label: 'Invoice Date' },
+      ];
+
+      if (!isProforma()) {
+        requiredFields.push(
+          { name: 'payment_date', label: 'Payment Date' },
+          { name: 'gst_rate', label: 'GST Rate' },
+          { name: 'payment_method', label: 'Payment Method' }
+        );
+      }
 
       const missingFields = [];
       requiredFields.forEach(field => {
@@ -351,6 +381,45 @@
       }
 
       return missingFields;
+    }
+
+    // Clear the form after successful generation
+    function clearForm() {
+      form.reset();
+
+      // Clear item rows (keep one row)
+      const tbody = document.querySelector('#itemsTable tbody');
+      tbody.innerHTML = '';
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="idx">1</td>
+        <td>
+          <input class="form-control desc" name="item_description">
+        </td>
+        <td>
+          <input class="form-control qty" type="number" value="1">
+        </td>
+        <td>
+          <input class="form-control price" type="number" step="0.01" value="0">
+        </td>
+        <td>
+          <button type="button" class="btn btn-danger removeRow">
+            Remove
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      // Clear auto number display and input
+      autoNumberDisplay.style.display = 'none';
+      invoiceNumberInput.value = '';
+      status.textContent = '';
+      warning.classList.add('d-none');
+
+      // Reload fresh data from database
+      setTimeout(() => {
+        loadInitialData();
+      }, 500);
     }
 
     form.addEventListener('submit', async (e) => {
@@ -425,32 +494,30 @@
 
         // Hide loader
         loader.style.display = 'none';
-        status.textContent = 'PDF ready — showing preview...';
+        status.textContent = 'Generated successfully! 🎉';
+        status.style.color = '#2e7d32';
         currentPdfUrl = json.url;
 
-        // Show the auto-generated document number
+        // Show the auto-generated document number in the form (read-only, not editable)
         if (json.invoiceNumber) {
           autoNumberValue.textContent = json.invoiceNumber;
           autoNumberDisplay.style.display = 'block';
+          // Also set the disabled invoice number input field
+          invoiceNumberInput.value = json.invoiceNumber;
         }
 
-        // Update Ref PI field with the auto-generated PI number
-        // (so it becomes the latest Ref PI for future tax invoices)
-        if (selectedType === 'proforma' && json.invoiceNumber) {
-          document.getElementById('refPiInput').value = json.invoiceNumber;
+        // Update the Ref PO / Ref PI fields with values returned from the server
+        // (these are the values that were just used/saved before incrementing the counter)
+        if (json.refPo !== undefined) {
+          document.getElementById('refPoInput').value = json.refPo;
         }
-
-        // Update Ref PO field with the current Ref PO value (saved)
-        if (data.refPo) {
-          document.getElementById('refPoInput').value = data.refPo;
+        if (json.refPi !== undefined) {
+          document.getElementById('refPiInput').value = json.refPi;
         }
 
         // Open preview modal with the PDF
         pdfPreview.src = currentPdfUrl;
         previewModal.style.display = 'flex';
-
-        // Re-enable button after success
-        submitBtn.disabled = false;
       } catch (err) {
         console.error(err);
         loader.style.display = 'none';
@@ -471,8 +538,20 @@
       submitBtn.textContent = proforma
         ? '📄 Generate Proforma Invoice PDF'
         : '🧾 Generate Tax Invoice PDF';
-      // Hide auto number display when switching types
-      autoNumberDisplay.style.display = 'none';
+
+      // Hide or show invoice number field based on doc type
+      if (proforma) {
+        // For proforma invoice, hide the invoice number field but still show Ref PI and Ref PO
+        invoiceNumberField.style.display = 'none';
+        invoiceNumberInput.value = '';
+        autoNumberDisplay.style.display = 'none';
+      } else {
+        // For tax invoice, show the invoice number field
+        invoiceNumberField.style.display = 'block';
+      }
+
+      // Load next number for the selected document type
+      loadNextNumber();
     }
 
     // Update submit button label when doc type changes
@@ -480,17 +559,24 @@
       radio.addEventListener('change', applyDocType);
     });
 
+    // Apply initial doc type settings on page load
+    applyDocType();
+
     // Close preview modal
     document.getElementById('closeTopPreview').addEventListener('click', () => {
       previewModal.style.display = 'none';
       pdfPreview.src = '';
       submitBtn.disabled = false;
+      // Clear form after closing preview
+      clearForm();
     });
 
     document.getElementById('closePreviewBtn').addEventListener('click', () => {
       previewModal.style.display = 'none';
       pdfPreview.src = '';
       submitBtn.disabled = false;
+      // Clear form after closing preview
+      clearForm();
     });
 
     // Download from preview

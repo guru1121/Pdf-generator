@@ -47,17 +47,38 @@ app.use(
 
 app.get('/api/latest-refs', async (req, res) => {
     try {
-        const refs = await db.getLatestRefs();
+        const refs = await db.getLatestRefValues();
 
         res.status(200).json({
-            refPo: refs.latest_ref_po || '',
-            refPi: refs.latest_ref_pi || ''
+            refPo: refs.refPo || '',
+            refPi: refs.refPi || ''
         });
     } catch (err) {
         console.error('Failed to fetch latest refs:', err);
 
         res.status(500).json({
             error: 'Failed to fetch latest refs'
+        });
+    }
+});
+
+// =====================================================
+// API: Get next document number (preview only, does not increment)
+// =====================================================
+
+app.get('/api/next-number/:docType', async (req, res) => {
+    try {
+        const { docType } = req.params;
+        const nextNumber = await db.getNextDocumentNumber(docType);
+
+        res.status(200).json({
+            nextNumber
+        });
+    } catch (err) {
+        console.error('Failed to fetch next number:', err);
+
+        res.status(500).json({
+            error: 'Failed to fetch next number'
         });
     }
 });
@@ -318,6 +339,10 @@ app.post('/genpdf', async (req, res) => {
             pdfUrl: url
         });
 
+        // Update Ref PO counter in ref_counters table
+        const nextRefPo = await db.issueNextRefValue('PO');
+        console.log('Next Ref PO issued:', nextRefPo);
+
         console.log(
             'Tax invoice generated:',
             url,
@@ -330,7 +355,9 @@ app.post('/genpdf', async (req, res) => {
                 'Tax invoice generated successfully',
             type: 'invoice',
             invoiceNumber,
-            url
+            url,
+            refPo: nextRefPo,
+            refPi: data.refPi
         });
 
     } catch (err) {
@@ -445,6 +472,10 @@ app.post('/genproformapdf', async (req, res) => {
             pdfUrl: url
         });
 
+        // Update Ref PI counter in ref_counters table
+        const nextRefPi = await db.issueNextRefValue('PI');
+        console.log('Next Ref PI issued:', nextRefPi);
+
         console.log(
             'Proforma invoice generated:',
             url,
@@ -457,7 +488,8 @@ app.post('/genproformapdf', async (req, res) => {
                 'Proforma invoice generated successfully',
             type: 'proforma',
             invoiceNumber: piNumber,
-            url
+            url,
+            refPi: nextRefPi
         });
 
     } catch (err) {
