@@ -44,16 +44,157 @@ legend {
     margin-top: 10px;
 }
 
-input[type="date"] {
-    cursor: pointer;
+/* ── Fix Bootstrap select dropdown closing too soon ── */
+select.form-select {
+    height: 42px;
+    border-radius: 10px;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.5 12.5l6.5-6.5 6.5 6.5'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 16px;
 }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
+/* Prevent dropdown from closing when clicking inside */
+.form-select {
     cursor: pointer;
+    padding-right: 2.5rem;
+}
+
+/* Fix z-index so dropdown appears above other elements */
+.form-select {
+    z-index: 1050;
+    position: relative;
+}
+
+.form-select:not([multiple]):not([size]) {
+    padding-right: 2.5rem;
+}
+
+.form-select.open,
+.form-select.show {
+    z-index: 1070 !important;
+}
+
+/* Keep Bootstrap dropdown menu above all form elements */
+.dropdown-menu.show {
+    z-index: 1080 !important;
+}
+
+/* Prevent the dropdown from closing when clicking inside it */
+.form-select + .dropdown-menu {
+    pointer-events: auto;
+}
+
+/* Date input styling for DD/MM/YY text inputs */
+input[type="text"].date-input {
+    cursor: pointer;
+    letter-spacing: 0.5px;
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.5 12.5l6.5-6.5 6.5 6.5'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    background-size: 16px 16px;
+    padding-right: 2.5rem;
+}
+
+input[type="text"].date-input:hover {
+    background-color: #f8f9fa;
+}
+
+input[type="text"].date-input:focus {
+    background-color: #fff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.5 12.5l6.5-6.5 6.5 6.5'/%3e%3c/svg%3e");
+}
+
+/* Input group for date with icon */
+.input-group .form-control {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group-text {
+    border-radius: 10px;
+}
+
+/* Address fields layout */
+.address-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.address-row .form-control {
+    flex: 1;
+    min-width: 200px;
+}
+
+/* State and Pincode side by side */
+.state-pincode-row {
+    display: flex;
+    gap: 15px;
+}
+
+.state-pincode-row .form-control {
+    flex: 1;
+}
+
+/* City, State, Pincode in a row */
+.city-state-pincode-row {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.city-state-pincode-row .form-control {
+    flex: 1;
+    min-width: 150px;
 }
 
 @media (max-width:768px){
     fieldset{
         padding:12px;
     }
+    .address-row,
+    .state-pincode-row,
+    .city-state-pincode-row {
+        flex-direction: column;
+        gap: 12px;
+    }
+}
+
+/* Flatpickr theme customization */
+.flatpickr-calendar {
+    border-radius: 10px !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15) !important;
+    margin-top: 8px !important;
+}
+
+.flatpickr-day.selected,
+.flatpickr-day.startRange,
+.flatpickr-day.endRange,
+.flatpickr-day.inRange,
+.flatpickr-day.flatpickr-disabled {
+    background: #0d6efd !important;
+}
+
+.flatpickr-day.today {
+    border-color: #0d6efd !important;
+}
+
+.flatpickr-months .flatpickr-month {
+    background: #0d6efd !important;
+    color: white !important;
+}
+
+.flatpickr-current-month .flatpickr-monthDropdown-months {
+    color: white !important;
+}
+
+.flatpickr-weekdays {
+    background: #e9ecef !important;
+}
+
+.flatpickr-weekday {
+    color: #0d6efd !important;
+    font-weight: bold !important;
 }
