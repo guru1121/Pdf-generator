@@ -285,21 +285,21 @@ app.get('/preview', async (req, res) => {
             seller: {
                 name: 'INDO DICTIONARY NETWORKS PRIVATE LIMITED',
                 addressLine1:
-                    '12/1, Nandbagh Sector D, Army Head Quarter, Indore,',
-                addressLine2:
-                    'Indore, Madhya Pradesh, India - 452006',
+                    '12/1, Nandbagh Sector D, Army Head Quarter',
                 city: 'Indore',
+                state: 'Madhya Pradesh',
+                pincode: '452006',
                 gstin: '23AAICI1972L1ZC',
-                contact: 'info@dictionarynetworks.in'
+                contact: 'info@dictionarynetworks.in, +91-96636 81258'
             },
 
             buyer: {
                 name: 'GOIP GLOBAL SERVICES PRIVATE LIMITED',
                 addressLine1:
-                    '207/88, Second Floor, Skipper Towers, Nehru Place, New Delhi-110019',
-                addressLine2:
-                    'Corporate office at D-206, Sector-63, Noida-201301(UP), India',
+                    '207/88, Second Floor, Skipper Towers, Nehru Place',
                 city: 'New Delhi',
+                state: 'Delhi',
+                pincode: '110019',
                 gstin: '09AABCS2463B1ZO'
             },
 

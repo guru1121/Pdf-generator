@@ -259,6 +259,23 @@
           if (isNaN(d.getTime())) return raw;
           return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
         }
+
+        // Join the available address parts into a single comma separated line
+        // e.g. "207/88 Skipper Towers, New Delhi, Delhi, 110001"
+        function formatAddress(party) {
+          if (!party) return '';
+
+          return [
+            party.addressLine1 || party.address,
+            party.addressLine2,
+            party.city,
+            party.state,
+            party.pincode
+          ]
+            .map(part => (part || '').toString().trim())
+            .filter(Boolean)
+            .join(', ');
+        }
       %>
 
       <!-- Seller and Buyer -->
@@ -274,32 +291,30 @@
             </h4>
 
             <strong>
-              INDO DICTIONARY NETWORKS PRIVATE LIMITED
+              <%= data.seller && data.seller.name
+                ? data.seller.name
+                : 'Seller Name'
+              %>
             </strong>
 
             <p>
-              12/1, Nandbagh Sector D, Army Head Quarter, Indore,
-            </p>
-
-            <p>
-              Indore, Madhya Pradesh, India - 452006
+              <%= formatAddress(data.seller) %>
             </p>
 
             <p>
               <strong>GSTIN :</strong>
-              23AAICI1972L1ZC
+              <%= data.seller && data.seller.gstin
+                ? data.seller.gstin
+                : ''
+              %>
             </p>
 
             <p>
               <strong>Contact:</strong>
-            </p>
-
-            <p>
-              info@dictionarynetworks.in
-            </p>
-
-            <p>
-              +91-96636 81258
+              <%= data.seller && data.seller.contact
+                ? data.seller.contact
+                : ''
+              %>
             </p>
 
           </div>
@@ -323,32 +338,7 @@
             </strong>
 
             <p>
-              <%= data.buyer && data.buyer.addressLine1
-                ? data.buyer.addressLine1
-                : ''
-              %>
-            </p>
-
-            <p>
-              <%= data.buyer && data.buyer.addressLine2
-                ? data.buyer.addressLine2
-                : ''
-              %>
-            </p>
-
-            <p>
-              <%= data.buyer && data.buyer.city
-                ? data.buyer.city
-                : ''
-              %>
-            </p>
-
-            <p>
-              <%= [
-                data.buyer && data.buyer.state,
-                data.buyer && data.buyer.pincode
-              ].filter(Boolean).join(' - ')
-              %>
+              <%= formatAddress(data.buyer) %>
             </p>
 
             <p>
