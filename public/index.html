@@ -215,12 +215,19 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Payment Method</label>
-                <select class="form-select payment-select" name="payment_method">
-                  <option value="">Select Payment Method</option>
-                  <option value="BankTransfer">Bank Transfer</option>
-                  <option value="UPI">UPI</option>
-                  <option value="Cash">Cash</option>
-                </select>
+                <div class="dropdown" id="paymentDropdown">
+                  <button class="btn btn-light form-control border dropdown-toggle payment-select" type="button" id="paymentDropdownBtn" aria-expanded="true">
+                    <span class="payment-selected-text">Select Payment Method</span>
+                    <span class="chevron">▼</span>
+                  </button>
+                  <ul class="dropdown-menu show w-100" aria-labelledby="paymentDropdownBtn">
+                    <li><a class="dropdown-item" data-value="" href="#">Select Payment Method</a></li>
+                    <li><a class="dropdown-item" data-value="BankTransfer" href="#">Bank Transfer</a></li>
+                    <li><a class="dropdown-item" data-value="UPI" href="#">UPI</a></li>
+                    <li><a class="dropdown-item" data-value="Cash" href="#">Cash</a></li>
+                  </ul>
+                </div>
+                <input type="hidden" name="payment_method" id="paymentMethodInput" value="">
               </div>
 
               <div class="col-md-6">
@@ -675,6 +682,49 @@
         }
       });
 
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script>
+    // Initialize flatpickr on date inputs
+    flatpickr("#invoiceDateInput", {
+      dateFormat: "d.m.y",
+      defaultDate: "",
+      allowInput: true,
+      onChange: function(selectedDates, dateStr) {
+        this.element.value = dateStr;
+      }
+    });
+
+    flatpickr("#paymentDateInput", {
+      dateFormat: "d.m.y",
+      defaultDate: "",
+      allowInput: true,
+      onChange: function(selectedDates, dateStr) {
+        this.element.value = dateStr;
+      }
+    });
+
+    // Payment dropdown: sync hidden input on item click
+    document.querySelectorAll("#paymentDropdown .dropdown-item").forEach(item => {
+      item.addEventListener("click", function(e) {
+        e.preventDefault();
+        const value = this.getAttribute("data-value");
+        const text = this.textContent.trim();
+        document.getElementById("paymentMethodInput").value = value;
+        document.querySelector("#paymentDropdown .payment-selected-text").textContent = text;
+        // Mark active
+        document.querySelectorAll("#paymentDropdown .dropdown-item").forEach(el => el.classList.remove("active"));
+        this.classList.add("active");
+      });
+    });
+
+    // Also sync on dropdown show — re-mark previously selected
+    document.querySelector("#paymentDropdown .dropdown-toggle").addEventListener("click", function() {
+      const storedValue = document.getElementById("paymentMethodInput").value;
+      document.querySelectorAll("#paymentDropdown .dropdown-item").forEach(el => {
+        el.classList.toggle("active", el.getAttribute("data-value") === storedValue);
+      });
     });
   </script>
 </body>

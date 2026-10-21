@@ -260,7 +260,24 @@ app.post('/genpdf', async (req, res) => {
         const data = {
             ...req.body,
             documentType: 'invoice',
-            invoiceNumber
+            invoiceNumber,
+            buyer: {
+                name: req.body.buyer_name,
+                gstin: req.body.buyer_gstin,
+                address: req.body.buyer_address,
+                city: req.body.buyer_city,
+                state: req.body.buyer_state,
+                pincode: req.body.buyer_pincode
+            },
+            seller: {
+                name: req.body.seller_name,
+                address: req.body.seller_address,
+                city: req.body.seller_city,
+                state: req.body.seller_state,
+                pincode: req.body.seller_pincode,
+                gstin: req.body.seller_gstin,
+                contact: req.body.seller_contact
+            }
         };
 
         const {
@@ -322,20 +339,16 @@ app.post('/genpdf', async (req, res) => {
             refPi: data.refPi,
             buyerName: data.buyer && data.buyer.name,
             buyerGstin: data.buyer && data.buyer.gstin,
-            buyerAddress: [
-                data.buyer && data.buyer.addressLine1,
-                data.buyer && data.buyer.addressLine2,
-                data.buyer && data.buyer.city
-            ].filter(Boolean).join(', '),
-            invoiceDate: data.invoiceDate,
-            placeOfSupply: data.placeOfSupply,
+            buyerAddress: formatAddress(data.buyer),
+            invoiceDate: formatDateDDMMYY(data.invoice_date),
+            placeOfSupply: data.place_of_supply,
             gstRate,
             items,
             subtotal: totals.subtotal,
             gstAmount: totals.gstAmount,
             grandTotal: totals.grandTotal,
-            paymentMethod: data.paymentMethod,
-            paymentDate: data.paymentDate,
+            paymentMethod: data.payment_method,
+            paymentDate: formatDateDDMMYY(data.payment_date),
             pdfUrl: url
         });
 
@@ -393,7 +406,24 @@ app.post('/genproformapdf', async (req, res) => {
         const data = {
             ...req.body,
             documentType: 'proforma',
-            invoiceNumber: piNumber
+            invoiceNumber: piNumber,
+            buyer: {
+                name: req.body.buyer_name,
+                gstin: req.body.buyer_gstin,
+                address: req.body.buyer_address,
+                city: req.body.buyer_city,
+                state: req.body.buyer_state,
+                pincode: req.body.buyer_pincode
+            },
+            seller: {
+                name: req.body.seller_name,
+                address: req.body.seller_address,
+                city: req.body.seller_city,
+                state: req.body.seller_state,
+                pincode: req.body.seller_pincode,
+                gstin: req.body.seller_gstin,
+                contact: req.body.seller_contact
+            }
         };
 
         const {
