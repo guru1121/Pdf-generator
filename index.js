@@ -163,6 +163,115 @@ function calculateTotals(items, gstRate) {
 
 
 // =====================================================
+// Helper: Format a party (buyer/seller) address
+// Joins the available address parts into a single line
+// =====================================================
+
+function formatAddress(party) {
+    if (!party) return '';
+
+    return [
+        party.addressLine1 || party.address,
+        party.addressLine2,
+        party.city,
+        party.state,
+        party.pincode
+    ]
+        .map(part => (part || '').toString().trim())
+        .filter(Boolean)
+        .join(', ');
+}
+
+
+// =====================================================
+// Helper: Format a date to "DD Mon YYYY"
+// Accepts DD/MM/YY, DD.MM.YY, DD-MM-YYYY and YYYY-MM-DD
+// =====================================================
+
+function formatDateDDMMYY(dateStr) {
+    if (!dateStr) return '';
+
+    const raw = String(dateStr).trim();
+
+    let day;
+    let month;
+    let year;
+
+    // YYYY-MM-DD
+    let match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+
+    if (match) {
+        year = Number(match[1]);
+        month = Number(match[2]);
+        day = Number(match[3]);
+    } else {
+
+        // DD/MM/YY , DD.MM.YY , DD-MM-YYYY
+        match = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+
+        if (match) {
+            day = Number(match[1]);
+            month = Number(match[2]);
+
+            const rawYear = Number(match[3]);
+
+            year = rawYear < 100
+                ? (rawYear >= 70 ? 1900 + rawYear : 2000 + rawYear)
+                : rawYear;
+        }
+    }
+
+    if (!day || !month || !year) return raw;
+
+    const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+
+    return `${String(day).padStart(2, '0')} ${months[month - 1]} ${year}`;
+}
+
+// =====================================================
+// Helper: Map a raw payment method value to a readable label
+// The dropdown submits values like "BankTransfer" / "UPI" / "Cash"
+// =====================================================
+
+function formatPaymentMethod(value) {
+    if (!value) return '';
+
+    const raw = String(value).trim();
+
+    if (!raw) return '';
+
+    const labels = {
+        banktransfer: 'Bank Transfer',
+        'bank transfer': 'Bank Transfer',
+        bank: 'Bank Transfer',
+        neft: 'NEFT',
+        rtgs: 'RTGS',
+        upi: 'UPI',
+        cash: 'Cash',
+        cheque: 'Cheque',
+        check: 'Cheque',
+        demanddraft: 'Demand Draft',
+        'demand draft': 'Demand Draft',
+        dd: 'Demand Draft',
+        card: 'Card',
+        creditcard: 'Credit Card',
+        'credit card': 'Credit Card',
+        debitcard: 'Debit Card',
+        'debit card': 'Debit Card',
+        netbanking: 'Net Banking',
+        'net banking': 'Net Banking'
+    };
+
+    return labels[raw.toLowerCase().replace(/[\s_-]+/g, '')]
+        || labels[raw.toLowerCase()]
+        || raw;
+}
+
+
+// =====================================================
 // Preview - Normal Invoice
 // =====================================================
 
@@ -257,27 +366,63 @@ app.post('/genpdf', async (req, res) => {
         // Auto-generate the next invoice number
         const invoiceNumber = await db.generateDocumentNumber('INVOICE');
 
+        const body = req.body || {};
+
+        // The form may submit either nested (buyer: {...}) or flat
+        // (buyer_name, buyer_address, ...) fields - support both.
+        const bodyBuyer = body.buyer || {};
+        const bodySeller = body.seller || {};
+
+        const pick = (...values) => {
+            for (const value of values) {
+                if (value !== undefined && value !== null && value !== '') {
+                    return value;
+                }
+            }
+            return undefined;
+        };
+
         const data = {
-            ...req.body,
+            ...body,
             documentType: 'invoice',
             invoiceNumber,
             buyer: {
-                name: req.body.buyer_name,
-                gstin: req.body.buyer_gstin,
-                address: req.body.buyer_address,
-                city: req.body.buyer_city,
-                state: req.body.buyer_state,
-                pincode: req.body.buyer_pincode
+                name: pick(bodyBuyer.name, body.buyer_name),
+                gstin: pick(bodyBuyer.gstin, body.buyer_gstin),
+                addressLine1: pick(
+                    bodyBuyer.addressLine1,
+                    bodyBuyer.address,
+                    body.buyer_address
+                ),
+                addressLine2: pick(bodyBuyer.addressLine2, body.buyer_address2),
+                city: pick(bodyBuyer.city, body.buyer_city),
+                state: pick(bodyBuyer.state, body.buyer_state),
+                pincode: pick(bodyBuyer.pincode, body.buyer_pincode)
             },
             seller: {
-                name: req.body.seller_name,
-                address: req.body.seller_address,
-                city: req.body.seller_city,
-                state: req.body.seller_state,
-                pincode: req.body.seller_pincode,
-                gstin: req.body.seller_gstin,
-                contact: req.body.seller_contact
-            }
+                name: pick(bodySeller.name, body.seller_name),
+                addressLine1: pick(
+                    bodySeller.addressLine1,
+                    bodySeller.address,
+                    body.seller_address
+                ),
+                addressLine2: pick(bodySeller.addressLine2, body.seller_address2),
+                city: pick(bodySeller.city, body.seller_city),
+                state: pick(bodySeller.state, body.seller_state),
+                pincode: pick(bodySeller.pincode, body.seller_pincode),
+                gstin: pick(bodySeller.gstin, body.seller_gstin),
+                contact: pick(bodySeller.contact, body.seller_contact)
+            },
+            invoiceDate: pick(body.invoiceDate, body.invoice_date),
+            paymentDate: pick(body.paymentDate, body.payment_date),
+            paymentMethod: formatPaymentMethod(
+                pick(body.paymentMethod, body.payment_method)
+            ),
+            placeOfSupply: pick(body.placeOfSupply, body.place_of_supply),
+            refPo: pick(body.refPo, body.ref_po),
+            refPi: pick(body.refPi, body.ref_pi),
+            gstRate: Number(pick(body.gstRate, body.gst_rate)) || 18,
+            items: body.items || []
         };
 
         const {
@@ -340,15 +485,15 @@ app.post('/genpdf', async (req, res) => {
             buyerName: data.buyer && data.buyer.name,
             buyerGstin: data.buyer && data.buyer.gstin,
             buyerAddress: formatAddress(data.buyer),
-            invoiceDate: formatDateDDMMYY(data.invoice_date),
-            placeOfSupply: data.place_of_supply,
+            invoiceDate: formatDateDDMMYY(data.invoiceDate),
+            placeOfSupply: data.placeOfSupply,
             gstRate,
             items,
             subtotal: totals.subtotal,
             gstAmount: totals.gstAmount,
             grandTotal: totals.grandTotal,
-            paymentMethod: data.payment_method,
-            paymentDate: formatDateDDMMYY(data.payment_date),
+            paymentMethod: data.paymentMethod,
+            paymentDate: formatDateDDMMYY(data.paymentDate),
             pdfUrl: url
         });
 
@@ -403,27 +548,63 @@ app.post('/genproformapdf', async (req, res) => {
         // Auto-generate the next PI number
         const piNumber = await db.generateDocumentNumber('PI');
 
+        const body = req.body || {};
+
+        // The form may submit either nested (buyer: {...}) or flat
+        // (buyer_name, buyer_address, ...) fields - support both.
+        const bodyBuyer = body.buyer || {};
+        const bodySeller = body.seller || {};
+
+        const pick = (...values) => {
+            for (const value of values) {
+                if (value !== undefined && value !== null && value !== '') {
+                    return value;
+                }
+            }
+            return undefined;
+        };
+
         const data = {
-            ...req.body,
+            ...body,
             documentType: 'proforma',
             invoiceNumber: piNumber,
             buyer: {
-                name: req.body.buyer_name,
-                gstin: req.body.buyer_gstin,
-                address: req.body.buyer_address,
-                city: req.body.buyer_city,
-                state: req.body.buyer_state,
-                pincode: req.body.buyer_pincode
+                name: pick(bodyBuyer.name, body.buyer_name),
+                gstin: pick(bodyBuyer.gstin, body.buyer_gstin),
+                addressLine1: pick(
+                    bodyBuyer.addressLine1,
+                    bodyBuyer.address,
+                    body.buyer_address
+                ),
+                addressLine2: pick(bodyBuyer.addressLine2, body.buyer_address2),
+                city: pick(bodyBuyer.city, body.buyer_city),
+                state: pick(bodyBuyer.state, body.buyer_state),
+                pincode: pick(bodyBuyer.pincode, body.buyer_pincode)
             },
             seller: {
-                name: req.body.seller_name,
-                address: req.body.seller_address,
-                city: req.body.seller_city,
-                state: req.body.seller_state,
-                pincode: req.body.seller_pincode,
-                gstin: req.body.seller_gstin,
-                contact: req.body.seller_contact
-            }
+                name: pick(bodySeller.name, body.seller_name),
+                addressLine1: pick(
+                    bodySeller.addressLine1,
+                    bodySeller.address,
+                    body.seller_address
+                ),
+                addressLine2: pick(bodySeller.addressLine2, body.seller_address2),
+                city: pick(bodySeller.city, body.seller_city),
+                state: pick(bodySeller.state, body.seller_state),
+                pincode: pick(bodySeller.pincode, body.seller_pincode),
+                gstin: pick(bodySeller.gstin, body.seller_gstin),
+                contact: pick(bodySeller.contact, body.seller_contact)
+            },
+            invoiceDate: pick(body.invoiceDate, body.invoice_date),
+            paymentDate: pick(body.paymentDate, body.payment_date),
+            paymentMethod: formatPaymentMethod(
+                pick(body.paymentMethod, body.payment_method)
+            ),
+            placeOfSupply: pick(body.placeOfSupply, body.place_of_supply),
+            refPo: pick(body.refPo, body.ref_po),
+            refPi: pick(body.refPi, body.ref_pi),
+            gstRate: Number(pick(body.gstRate, body.gst_rate)) || 18,
+            items: body.items || []
         };
 
         const {
@@ -485,12 +666,8 @@ app.post('/genproformapdf', async (req, res) => {
             refPi: data.refPi,
             buyerName: data.buyer && data.buyer.name,
             buyerGstin: data.buyer && data.buyer.gstin,
-            buyerAddress: [
-                data.buyer && data.buyer.addressLine1,
-                data.buyer && data.buyer.addressLine2,
-                data.buyer && data.buyer.city
-            ].filter(Boolean).join(', '),
-            invoiceDate: data.invoiceDate,
+            buyerAddress: formatAddress(data.buyer),
+            invoiceDate: formatDateDDMMYY(data.invoiceDate),
             placeOfSupply: data.placeOfSupply,
             gstRate,
             items,
@@ -498,7 +675,7 @@ app.post('/genproformapdf', async (req, res) => {
             gstAmount: totals.gstAmount,
             grandTotal: totals.grandTotal,
             paymentMethod: data.paymentMethod,
-            paymentDate: data.paymentDate,
+            paymentDate: formatDateDDMMYY(data.paymentDate),
             pdfUrl: url
         });
 

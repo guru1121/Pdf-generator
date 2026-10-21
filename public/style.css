@@ -79,7 +79,7 @@ select.form-select {
 .payment-select {
     height: 42px;
     border-radius: 10px;
-    padding: 0 1.25rem;
+    padding: 0 2.5rem 0 1.25rem;
     line-height: 1.5;
     background-color: #fff;
     border: 1px solid #ced4da;
@@ -90,10 +90,24 @@ select.form-select {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2.5 12.5l6.5-6.5 6.5 6.5'/%3e%3c/svg%3e");
-    background-repeat: no-repeat;
-    background-position: right 0.75rem center;
-    background-size: 16px 16px;
+}
+
+/* Hide the default bootstrap caret - we use our own .chevron span */
+.payment-select::after {
+    display: none !important;
+}
+
+.payment-select .chevron {
+    font-size: 0.6rem;
+    color: #6c757d;
+    line-height: 1;
+    transition: transform 0.15s ease-in-out;
+    flex-shrink: 0;
+    margin-left: 0.5rem;
+}
+
+#paymentDropdown.show .payment-select .chevron {
+    transform: rotate(180deg);
 }
 
 .payment-select:hover {

@@ -228,9 +228,35 @@
       <%
         function formatDate(dateStr) {
           if (!dateStr) return '';
-          const d = new Date(dateStr);
-          if (isNaN(d.getTime())) return dateStr;
+
+          const raw = String(dateStr).trim();
+
           const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+          // DD/MM/YY , DD.MM.YY , DD-MM-YYYY , YYYY-MM-DD
+          let match = raw.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+          let day, month, year;
+
+          if (match) {
+            day = Number(match[1]);
+            month = Number(match[2]);
+            const rawYear = Number(match[3]);
+            year = rawYear < 100 ? (rawYear >= 70 ? 1900 + rawYear : 2000 + rawYear) : rawYear;
+          } else {
+            match = raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+            if (match) {
+              year = Number(match[1]);
+              month = Number(match[2]);
+              day = Number(match[3]);
+            }
+          }
+
+          if (day && month && year && month >= 1 && month <= 12) {
+            return `${String(day).padStart(2, '0')} ${months[month - 1]} ${year}`;
+          }
+
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return raw;
           return `${d.getDate().toString().padStart(2, '0')} ${months[d.getMonth()]} ${d.getFullYear()}`;
         }
       %>
@@ -314,6 +340,14 @@
               <%= data.buyer && data.buyer.city
                 ? data.buyer.city
                 : ''
+              %>
+            </p>
+
+            <p>
+              <%= [
+                data.buyer && data.buyer.state,
+                data.buyer && data.buyer.pincode
+              ].filter(Boolean).join(' - ')
               %>
             </p>
 

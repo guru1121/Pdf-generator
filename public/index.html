@@ -216,11 +216,11 @@
               <div class="col-md-6">
                 <label class="form-label">Payment Method</label>
                 <div class="dropdown" id="paymentDropdown">
-                  <button class="btn btn-light form-control border dropdown-toggle payment-select" type="button" id="paymentDropdownBtn" aria-expanded="true">
+                  <button class="btn btn-light form-control border dropdown-toggle payment-select" type="button" id="paymentDropdownBtn" aria-expanded="false">
                     <span class="payment-selected-text">Select Payment Method</span>
                     <span class="chevron">▼</span>
                   </button>
-                  <ul class="dropdown-menu show w-100" aria-labelledby="paymentDropdownBtn">
+                  <ul class="dropdown-menu w-100" aria-labelledby="paymentDropdownBtn">
                     <li><a class="dropdown-item" data-value="" href="#">Select Payment Method</a></li>
                     <li><a class="dropdown-item" data-value="BankTransfer" href="#">Bank Transfer</a></li>
                     <li><a class="dropdown-item" data-value="UPI" href="#">UPI</a></li>
@@ -438,6 +438,14 @@
       status.textContent = '';
       warning.classList.add('d-none');
 
+      // Reset payment dropdown label + hidden input (form.reset() does not
+      // restore text that was set via JS on the dropdown button)
+      const paymentHiddenInput = document.getElementById('paymentMethodInput');
+      const paymentSelectedText = document.querySelector('#paymentDropdown .payment-selected-text');
+      if (paymentHiddenInput) paymentHiddenInput.value = '';
+      if (paymentSelectedText) paymentSelectedText.textContent = 'Select Payment Method';
+      document.querySelectorAll('#paymentDropdown .dropdown-item').forEach(el => el.classList.remove('active'));
+
       // Reload fresh data from database
       setTimeout(() => {
         loadInitialData();
@@ -471,17 +479,21 @@
       const data = {
         seller: {
           name: fd.get('seller_name'),
-          addressLine1: fd.get('seller_address1'),
+          addressLine1: fd.get('seller_address'),
           addressLine2: fd.get('seller_address2'),
           city: fd.get('seller_city'),
+          state: fd.get('seller_state'),
+          pincode: fd.get('seller_pincode'),
           gstin: fd.get('seller_gstin'),
           contact: fd.get('seller_contact')
         },
         buyer: {
           name: fd.get('buyer_name'),
-          addressLine1: fd.get('buyer_address1'),
+          addressLine1: fd.get('buyer_address'),
           addressLine2: fd.get('buyer_address2'),
           city: fd.get('buyer_city'),
+          state: fd.get('buyer_state'),
+          pincode: fd.get('buyer_pincode'),
           gstin: fd.get('buyer_gstin')
         },
         invoiceDate: fd.get('invoice_date'),
@@ -705,27 +717,72 @@
       }
     });
 
-    // Payment dropdown: sync hidden input on item click
-    document.querySelectorAll("#paymentDropdown .dropdown-item").forEach(item => {
-      item.addEventListener("click", function(e) {
-        e.preventDefault();
-        const value = this.getAttribute("data-value");
-        const text = this.textContent.trim();
-        document.getElementById("paymentMethodInput").value = value;
-        document.querySelector("#paymentDropdown .payment-selected-text").textContent = text;
-        // Mark active
-        document.querySelectorAll("#paymentDropdown .dropdown-item").forEach(el => el.classList.remove("active"));
-        this.classList.add("active");
-      });
-    });
+    // Payment dropdown: open/close on button click, sync hidden input on item click
+    (function initPaymentDropdown() {
+      const dropdown = document.getElementById("paymentDropdown");
+      const btn = document.getElementById("paymentDropdownBtn");
+      const menu = dropdown ? dropdown.querySelector(".dropdown-menu") : null;
+      const selectedText = dropdown ? dropdown.querySelector(".payment-selected-text") : null;
+      const hiddenInput = document.getElementById("paymentMethodInput");
 
-    // Also sync on dropdown show — re-mark previously selected
-    document.querySelector("#paymentDropdown .dropdown-toggle").addEventListener("click", function() {
-      const storedValue = document.getElementById("paymentMethodInput").value;
-      document.querySelectorAll("#paymentDropdown .dropdown-item").forEach(el => {
-        el.classList.toggle("active", el.getAttribute("data-value") === storedValue);
+      if (!dropdown || !btn || !menu) return;
+
+      const items = Array.from(dropdown.querySelectorAll(".dropdown-item"));
+
+      const setOpen = (isOpen) => {
+        menu.classList.toggle("show", isOpen);
+        btn.setAttribute("aria-expanded", isOpen ? "true" : "false");
+        btn.classList.toggle("show", isOpen);
+        dropdown.classList.toggle("show", isOpen);
+      };
+
+      const isOpen = () => menu.classList.contains("show");
+
+      // Toggle open / closed when clicking the button
+      btn.addEventListener("click", function(e) {
+        e.stopPropagation();
+        setOpen(!isOpen());
       });
-    });
+
+      // Select an item -> store value, update label, close the menu
+      items.forEach(item => {
+        item.addEventListener("click", function(e) {
+          e.preventDefault();
+          e.stopPropagation();
+
+          const value = this.getAttribute("data-value");
+          const text = this.textContent.trim();
+
+          if (hiddenInput) hiddenInput.value = value;
+          if (selectedText) selectedText.textContent = text;
+
+          items.forEach(el => el.classList.remove("active"));
+          this.classList.add("active");
+
+          setOpen(false);
+        });
+      });
+
+      // Keep the previously selected item highlighted whenever the menu opens
+      btn.addEventListener("click", function() {
+        const storedValue = hiddenInput ? hiddenInput.value : "";
+        items.forEach(el => {
+          el.classList.toggle("active", el.getAttribute("data-value") === storedValue);
+        });
+      });
+
+      // Close when clicking outside
+      document.addEventListener("click", function(e) {
+        if (!dropdown.contains(e.target)) {
+          setOpen(false);
+        }
+      });
+
+      // Close on Escape
+      document.addEventListener("keydown", function(e) {
+        if (e.key === "Escape") setOpen(false);
+      });
+    })();
   </script>
 </body>
 
