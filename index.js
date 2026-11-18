@@ -17,6 +17,11 @@ app.use(express.json());
 
 const port = process.env.PORT || 4000;
 
+// =====================================================
+// Permanent HSN Number (always printed on invoices)
+// =====================================================
+const HSN_NUMBER = '998314';
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.set('view engine', 'ejs');
@@ -386,6 +391,7 @@ app.post('/genpdf', async (req, res) => {
             ...body,
             documentType: 'invoice',
             invoiceNumber,
+            hsnNumber: HSN_NUMBER,
             buyer: {
                 name: pick(bodyBuyer.name, body.buyer_name),
                 gstin: pick(bodyBuyer.gstin, body.buyer_gstin),
@@ -568,6 +574,7 @@ app.post('/genproformapdf', async (req, res) => {
             ...body,
             documentType: 'proforma',
             invoiceNumber: piNumber,
+            hsnNumber: HSN_NUMBER,
             buyer: {
                 name: pick(bodyBuyer.name, body.buyer_name),
                 gstin: pick(bodyBuyer.gstin, body.buyer_gstin),
